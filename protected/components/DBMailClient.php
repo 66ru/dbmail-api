@@ -2,6 +2,11 @@
 
 class DBMailClient extends CComponent
 {
+    public function init()
+    {
+
+    }
+
     /**
      * @param $userName string
      * @throws DBMailClientException

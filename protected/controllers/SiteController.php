@@ -20,6 +20,8 @@ class SiteController extends Controller
         $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $_POST['rules'], $_POST['actions']);
         $newScript = SieveCreator::mergeScripts($oldScript, $newScript);
         $this->dbMailClient->writeScript($userName, $newScript);
+
+        $this->sendAnswer(array('status' => 'ok'));
     }
 
     public function actionDeleteRule()
@@ -30,5 +32,14 @@ class SiteController extends Controller
     public function actionGetRules()
     {
 
+    }
+
+    public function actionError()
+    {
+        if ($error = Yii::app()->errorHandler->error) {
+            $this->sendAnswer(array('status' => 'error', 'message' => $error['message']));
+        } else {
+            throw new CHttpException(404);
+        }
     }
 }

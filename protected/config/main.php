@@ -45,6 +45,9 @@ return array(
 //            'password' => '123',
 //            'charset' => 'utf8',
 //        ),
+        'errorHandler' => array(
+            'errorAction' => 'site/error',
+        ),
         'dbmail' => array(
             'class' => 'application.components.DBMailClient'
         ),

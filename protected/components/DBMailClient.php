@@ -1,10 +1,10 @@
 <?php
 
-class SieveClient
+class DBMailClient extends CComponent
 {
     /**
      * @param $userName string
-     * @throws SieveClientException
+     * @throws DBMailClientException
      * @return string
      */
     public function getScript($userName)
@@ -14,7 +14,7 @@ class SieveClient
         if (end($output) == 'No active script found!')
             return '';
         if (end($output) == 'File not modified, canceling.')
-            throw new SieveClientException("dbmail-sievecmd returned wrong output");
+            throw new DBMailClientException("dbmail-sievecmd returned wrong output");
 
         array_pop($output);
 
@@ -42,19 +42,19 @@ class SieveClient
     /**
      * @param $cmd string
      * @param null|string $expectedLastString
+     * @throws DBMailClientException
      * @return string[]
-     * @throws SieveClientException
      */
     protected function exec($cmd, $expectedLastString = null)
     {
         exec('EDITOR=cat '.$cmd, $output, $returnVal);
         if ($returnVal)
-            throw new SieveClientException("dbmail-sievecmd returned code $returnVal");
+            throw new DBMailClientException("dbmail-sievecmd returned code $returnVal");
         if (!empty($expectedLastString) && end($output) != $expectedLastString)
-            throw new SieveClientException("dbmail-sievecmd returned wrong output");
+            throw new DBMailClientException("dbmail-sievecmd returned wrong output");
 
         return $output;
     }
 }
 
-class SieveClientException extends Exception {};
+class DBMailClientException extends CException {};

@@ -1,25 +1,13 @@
 <?php
 
-$action = !empty($_POST['action']) ? $_POST['action'] : null;
-$validActions = array('createRule', 'deleteRule', 'getRules');
-if (!in_array($action, $validActions))
-    throw new Exception('wrong action');
+// change the following paths if necessary
+$yii=dirname(__FILE__).'/lib/yii/framework/yii.php';
+$config=dirname(__FILE__).'/protected/config/main.php';
 
-$userName = !empty($_POST['userName']) ? $_POST['userName'] : null;
-$ruleName = !empty($_POST['ruleName']) ? $_POST['ruleName'] : null;
-$rules = !empty($_POST['rules']) ? $_POST['rules'] : null;
-$ruleActions = !empty($_POST['actions']) ? $_POST['actions'] : null;
+// remove the following lines when in production mode
+defined('YII_DEBUG') or define('YII_DEBUG',true);
+// specify how many levels of call stack should be shown in each log message
+defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL',3);
 
-$sc = new SieveClient();
-if ($action == 'createRule') {
-    $oldScript = $sc->getScript($userName);
-    $newScript = SieveCreator::generateSieveScript($ruleName, $rules, $action);
-    $newScript = SieveCreator::mergeScripts($oldScript, $newScript);
-    $sc->writeScript($userName, $newScript);
-
-    echo 'ok';
-} else if ($action == 'deleteRule') {
-//    $script = $sc->getScript($userName);
-
-} else if ($action == 'getRules') {
-}
+require_once($yii);
+Yii::createWebApplication($config)->run();

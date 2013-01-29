@@ -2,67 +2,45 @@
 
 class SieveCreator 
 {
-    public function generateSieveScript($ruleName)
+    /**
+     * @param string $ruleName
+     * @param array $rules
+     * @param array $actions
+     * @return string
+     */
+    public static function generateSieveScript($ruleName, $rules, $actions)
     {
-        $countRules = 0;
-        $countActions = 0;
-        foreach ($_POST as $key => $val) {
-            if (preg_match('/^ruleSelect(\d+)$/', $key, $matches)) {
-                if (isset($matches[1]) && $matches[1] > $countRules) {
-                    $countRules = $matches[1];
-                }
-            }
-            if (preg_match('/^actionSelect(\d+)$/', $key, $matches)) {
-                if (isset($matches[1]) && $matches[1] > $countActions) {
-                    $countActions = $matches[1];
-                }
-            }
-        }
+        $require = array();
 
-        $sieve = '';
-        if ($countRules > 0) {
-            $require = array();
-            $conditions = array();
-            $actions = array();
-            for ( $i=1; $i <= $countRules; $i++ ) {
-                $condition = $this->getCondition($i, $require);
-                if ($condition)
-                    $conditions[] = $condition;
+        $actions = self::getActions($actions, $require);
+        $conditions = self::getConditions($rules, $require);
+        $requireMeta = json_encode($require);
+        $require = self::generateRequireHeader($require);
 
-            }
-            for ( $i=1; $i <= $countActions; $i++ ) {
-                $action = $this->getAction($i, $require);
-                if ($action)
-                    $actions[] = $action;
-            }
+        $actions = implode(";\n    ", $actions);
 
-            $sieve = $this->generateRequireHeader($require);
-            $sieve.= "#rule=$ruleName\n";
+        // align conditions
+        $conditions = implode(",\n", $conditions);
+        $conditionsArr = array();
+        foreach(explode("\n", $conditions) as $condition)
+            $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
+        $conditions = implode("\n", $conditionsArr);
 
-            $conditions = implode(",\n", $conditions);
-            $conditionsArr = array();
-            foreach(explode("\n", $conditions) as $condition)
-                $conditionsArr[] = empty($conditionsArr) ? $condition : $this->alignCondition($condition, $countRules);
-            $conditions = implode("\n", $conditionsArr);
-
-            $actions = implode(";\n    ", $actions);
-
-            if ($actions && $conditions) {
-                if ($countRules > 1)
-                    $sieve .= "if allof($conditions) {\n    $actions;\n}\n\n";
-                else
-                    $sieve .= "if $conditions {\n    $actions;\n}\n\n";
-            }
+        $sieve = $require . "#rule=$ruleName\n#require=$requireMeta\n";
+        if ($actions && $conditions) {
+            if (count($rules) > 1)
+                $sieve .= "if allof($conditions) {\n    $actions;\n}\n\n";
+            else
+                $sieve .= "if $conditions {\n    $actions;\n}\n\n";
         }
 
         return $sieve;
     }
-
     /**
-     * @param $require
+     * @param string[] $require
      * @return string
      */
-    public function generateRequireHeader($require)
+    protected static function generateRequireHeader($require)
     {
         $requireStr = '';
         foreach (array_keys($require) as $requireElement) {
@@ -75,147 +53,139 @@ class SieveCreator
     }
 
     /**
-     * @param $actionIndex
-     * @param $require
-     * @return string my be empty
+     * @param array $actions
+     * @param string[] $require
+     * @return string[]
      */
-    public function getAction($actionIndex, &$require)
+    protected static function getActions($actions, &$require)
     {
-        $action = Parameters::getStringParameter("actionSelect{$actionIndex}");
-        if ($action == 'Discard') {
-            $action = 'discard';
-        } else if ($action == 'Mirror to') {
-            $actionText = Parameters::getStringParameter("actionText{$actionIndex}");
-            if (!preg_match('#^.+?@.+?\..+?$#', $actionText))
-                return '';
-            $this->sieveEscape($actionText);
-            $action = "redirect \"$actionText\"";
-        } else if ($action == 'Mark') {
-            $action = 'setflag';
-            $flag = Parameters::getStringParameter("markSelect{$actionIndex}");
-            if ($flag == 'Flagged')
-                $action.=' "\\\\Flagged"';
-            elseif ($flag == 'Read')
-                $action.=' "\\\\Seen"';
-            else
-                return '';
-            $require['imap4flags'] = true;
-        } else if ($action == 'Store in') {
-            $folder = Parameters::getStringParameter("foldersSelect{$actionIndex}");
-            $this->sieveEscape($folder);
-            $action = "fileinto \"$folder\"";
-            $require['fileinto'] = true;
-        } else {
-            return '';
+        $actionsArr = array();
+        foreach ($actions as $action => $attribute) {
+            if ($action == 'Discard') {
+                $actionsArr[] =  'discard';
+            } else if ($action == 'Mirror to') {
+                if (!preg_match('#^.+?@.+?\..+?$#', $attribute))
+                    continue;
+                $attribute = self::sieveEscape($attribute);
+                $actionsArr[] = "redirect \"$attribute\"";
+            } else if ($action == 'Mark') {
+                if (!in_array($attribute, array('Flagged', 'Read')))
+                    continue;
+
+                $require['imap4flags'] = true;
+                $action = 'setflag';
+                if ($attribute == 'Flagged')
+                    $action.=' "\\\\Flagged"';
+                elseif ($attribute == 'Read')
+                    $action.=' "\\\\Seen"';
+                $actionsArr[] = $action;
+            } else if ($action == 'Store in') {
+                $attribute = self::sieveEscape($attribute);
+                $actionsArr[] = "fileinto \"$attribute\"";
+                $require['fileinto'] = true;
+            }
         }
 
-        return $action;
+        return $actionsArr;
     }
 
     /**
-     * @param $conditionIndex
-     * @param $require
+     * @param array $rules
+     * @param string[] $require
+     * @return string[]
+     */
+    protected static function getConditions($rules, &$require)
+    {
+        $conditions = array();
+        foreach ($rules as $attribute => $rule) {
+            $condition = self::getCondition($attribute, $rule, $require);
+            if ($condition)
+                $conditions[] = $condition;
+        }
+
+        return $conditions;
+    }
+
+    /**
+     * @param $rule array
+     * @param $attribute string
+     * @param string[] $require
      * @return string my be empty
      */
-    public function getCondition($conditionIndex, &$require)
+    protected static function getCondition($rule, $attribute, &$require)
     {
-        $condition = '';
-        $attribute = Parameters::getStringParameter("ruleSelect{$conditionIndex}");
-        $operator = Parameters::getStringParameter("opSelect{$conditionIndex}");
         if (in_array($attribute, array('From', 'Subject', 'Any To or Cc'))) {
-            $text = Parameters::getStringParameter("ruleText{$conditionIndex}");
-            if (empty($text))
+            if (empty($rule['value']))
+                return '';
+            if (!in_array($rule['operation'], array('is', 'is not')))
                 return '';
 
-            $text = $this->sieveEscape($text);
-            $text = "\"$text\"";
+            // if value surrounded by asterisks - convert operation to internal kind
+            if (strpos($rule['value'], '*') === 0 && strrpos($rule['value'], '*') === strlen($rule['value'])-1) {
+                if ($rule['operation'] == 'is') {
+                    $rule['operation'] = 'in';
+                    $rule['value'] = trim($rule['value'], '*');
+                } else if ($rule['operation'] == 'is not') {
+                    $rule['operation'] = 'not in';
+                    $rule['value'] = trim($rule['value'], '*');
+                }
+            }
+
             if ($attribute == 'Any To or Cc') {
                 $attribute = '["Cc", "To"]';
             } else {
-                $attribute = $this->sieveEscape($attribute);
+                $attribute = self::sieveEscape($attribute);
                 $attribute = "\"$attribute\"";
             }
 
-            if ($operator == 'is')
+            $condition = '';
+            if ($rule['operation'] == 'is')
                 $condition = "header :is";
-            else if ($operator == 'is not')
+            else if ($rule['operation'] == 'is not')
                 $condition = "not header :is";
-            else if ($operator == 'in')
+            else if ($rule['operation'] == 'in')
                 $condition = "header :contains";
-            else if ($operator == 'not in')
+            else if ($rule['operation'] == 'not in')
                 $condition = "not header :contains";
-            if (!empty($condition))
-                $condition.= " $attribute $text";
+
+            $text = self::sieveEscape($rule['value']);
+            $text = "\"$text\"";
+            $condition.= " $attribute $text";
+
+            return $condition;
         } else if ($attribute == 'Message Size') {
-            $bytes = Parameters::getIntegerParameter("ruleText{$conditionIndex}");
-            if (empty($bytes))
+            if (empty($rule['value']) || !is_numeric($rule['value']))
+                return '';
+            if (!in_array($rule['operation'], array('is', 'is not', 'less than', 'greater than')))
                 return '';
 
-            if ($operator == 'less than') {
+            $condition = '';
+            $bytes = $rule['value'];
+            if ($rule['operation'] == 'less than') {
                 $condition = "size :under $bytes";
-            } else if ($operator == 'greater than') {
+            } else if ($rule['operation'] == 'greater than') {
                 $condition = "size :over $bytes";
-            } else if ($operator == 'is') {
+            } else if ($rule['operation'] == 'is') {
                 $bytesMinus1 = $bytes - 1;
                 $bytesPlus1 = $bytes + 1;
                 $condition = "allof(size :over $bytesMinus1,\n      size :under $bytesPlus1)";
-            } else if ($operator == 'is not') {
+            } else if ($rule['operation'] == 'is not') {
                 $condition = "anyof(size :under $bytes,\n      size :over $bytes)";
             }
-//        } else if (in_array($attribute, array('Current Day', 'Time Of Day'))) {
-//            if ($attribute == 'Current Day') {
-//                $selectedWeekday = array();
-//                for ($j = 1; $j <= 7; $j++) {
-//                    if (Parameters::getIntegerParameter("daycheck{$j}_{$conditionIndex}")) {
-//                        $dayIndex = $j == 7 ? 0 : $j;
-//                        if ($operator == 'in')
-//                            $selectedWeekday[] = "currentdate :is \"weekday\" \"$dayIndex\"";
-//                        else if ($operator == 'not in')
-//                            $selectedWeekday[] = "not currentdate :is \"weekday\" \"$dayIndex\"";
-//                    }
-//                }
-//                if (empty($selectedWeekday))
-//                    return '';
-//
-//                $selectedCount = count($selectedWeekday);
-//                $selectedWeekday = implode(",\n      ", $selectedWeekday);
-//                if ($operator == 'in' && $selectedCount > 1)
-//                    $condition = "anyof($selectedWeekday)";
-//                else if ($operator == 'not in' && $selectedCount > 1)
-//                    $condition = "allof($selectedWeekday)";
-//                else if ($selectedCount == 1)
-//                    $condition = $selectedWeekday;
-//            } else if ($attribute == 'Time Of Day') {
-//                $from = $this->normalizeTime(Parameters::getStringParameter("ruleText1_$conditionIndex"));
-//                $to = $this->normalizeTime(Parameters::getStringParameter("ruleText2_$conditionIndex"));
-//
-//                if ($from && $to) {
-//                    $condition = "allof(currentdate \"ge\" \"time\" \"$from\",\n      currentdate \"le\" \"time\" \"$to\")";
-//                }
-//            }
-//            $require['date'] = true;
-        }
 
-        return $condition;
-    }
-
-    public function sieveEscape($str)
-    {
-        return str_replace('"', '\\"', $str);
-    }
-
-    protected function normalizeTime($str)
-    {
-        if (preg_match('#(\d+):(\d+)#', $str, $matches)) {
-            foreach ($matches as $id => $match) {
-                if ($matches[$id] < 10)
-                    $matches[$id] = '0'.$matches[$id];
-            }
-            $matches[2] = '00';
-            return implode(':', $matches);
+            return $condition;
         }
 
         return '';
+    }
+
+    /**
+     * @param $str string
+     * @return string
+     */
+    protected static function sieveEscape($str)
+    {
+        return str_replace('"', '\\"', $str);
     }
 
     /**
@@ -242,7 +212,7 @@ class SieveCreator
      * @param $newScript string
      * @return string
      */
-    public function mergeScripts($oldScript, $newScript)
+    public static function mergeScripts($oldScript, $newScript)
     {
         $sieve = $oldScript . $newScript;
 

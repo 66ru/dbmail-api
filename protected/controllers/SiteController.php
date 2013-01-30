@@ -14,10 +14,16 @@ class SiteController extends Controller
 
     public function actionCreateRule()
     {
+        $rules = @json_decode($_POST['rules'], true);
+        $actions = @json_decode($_POST['actions'], true);
+
+        if (empty($_POST['userName']) || empty($rules) || empty($actions))
+            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+
         $userName = $_POST['userName'];
 
         $oldScript = $this->dbMailClient->getScript($userName);
-        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $_POST['rules'], $_POST['actions']);
+        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $rules, $actions);
         $newScript = SieveCreator::mergeScripts($oldScript, $newScript);
         $this->dbMailClient->writeScript($userName, $newScript);
 

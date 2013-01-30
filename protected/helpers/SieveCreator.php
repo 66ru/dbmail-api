@@ -36,6 +36,7 @@ class SieveCreator
 
         return $sieve;
     }
+
     /**
      * @param string[] $require
      * @return string
@@ -46,8 +47,9 @@ class SieveCreator
         foreach (array_keys($require) as $requireElement) {
             $requireStr[] = "\"$requireElement\"";
         }
-        if (count($requireStr) > 1)
-            $requireStr = '['.implode(', ', $requireStr).']';
+        $requireStr = implode(', ', $requireStr);
+        if (count($require) > 1)
+            $requireStr = '['.$requireStr.']';
 
         return $requireStr ? "require $requireStr;\n\n" : '';
     }

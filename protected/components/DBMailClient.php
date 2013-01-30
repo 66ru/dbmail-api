@@ -19,7 +19,7 @@ class DBMailClient extends CComponent
         if (end($output) == 'No active script found!')
             return '';
         if (end($output) == 'File not modified, canceling.')
-            throw new DBMailClientException("dbmail-sievecmd returned wrong output");
+            throw new DBMailClientException("dbmail-sievecmd returned wrong output: ".implode("\n", $output));
 
         array_pop($output);
 
@@ -54,9 +54,9 @@ class DBMailClient extends CComponent
     {
         exec($cmd, $output, $returnVal);
         if ($returnVal)
-            throw new DBMailClientException("dbmail-sievecmd returned code $returnVal");
+            throw new DBMailClientException("dbmail-sievecmd returned code $returnVal with message: ".implode("\n", $output));
         if (!empty($expectedLastString) && end($output) != $expectedLastString)
-            throw new DBMailClientException("dbmail-sievecmd returned wrong output");
+            throw new DBMailClientException("dbmail-sievecmd returned wrong output: ".implode("\n", $output));
 
         return $output;
     }

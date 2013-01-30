@@ -219,10 +219,10 @@ class SieveCreator
         $sieve = $oldScript . $newScript;
 
         // combines require header
-        if (preg_match_all('#^require\s\[?(.+?)\]?;$m#', $sieve, $matches)) {
+        if (preg_match_all('/#require=(.*?)$/m', $sieve, $matches)) {
             $require = array();
-            foreach ($matches as $match) {
-                $modules = explode(', ', $match[0]);
+            foreach ($matches[0] as $match) {
+                $modules = json_decode($match, true);
                 $require+= $modules;
             }
             $require = array_unique($require);

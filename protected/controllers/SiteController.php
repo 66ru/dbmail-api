@@ -17,7 +17,7 @@ class SiteController extends Controller
         $rules = @json_decode($_POST['rules'], true);
         $actions = @json_decode($_POST['actions'], true);
 
-        if (empty($_POST['userName']) || empty($rules) || empty($actions))
+        if (empty($_POST['userName']) || empty($_POST['ruleName']) || empty($rules) || empty($actions))
             $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
         $userName = $_POST['userName'];
@@ -32,12 +32,28 @@ class SiteController extends Controller
 
     public function actionDeleteRule()
     {
+        if (empty($_POST['userName']) || empty($_POST['ruleName']))
+            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
+        $userName = $_POST['userName'];
+        $ruleName = preg_quote($_POST['ruleName'], '/');
+
+        $script = $this->dbMailClient->getScript($userName);
+        preg_replace('/#rule='.$ruleName.'.*?\n\n/s', '', $script);
+        $this->dbMailClient->writeScript($userName, $script);
+
+        $this->sendAnswer(array('status' => 'ok'));
     }
 
     public function actionGetRules()
     {
+        if (empty($_POST['userName']))
+            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
+        $script = $this->dbMailClient->getScript($_POST['userName']);
+        preg_match_all('/#rule=(.*?)$/', $script, $matches);
+
+        $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
     }
 
     public function actionError()

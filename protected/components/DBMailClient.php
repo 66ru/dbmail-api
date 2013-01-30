@@ -39,7 +39,7 @@ class DBMailClient extends CComponent
         unlink($tempFile);
 
         if (strpos(end($output), 'marked inactive') !== false)
-            $this->exec("dbmail-sievecmd -u $userName -a script.sieve", 'Script [test.sieve] is now active. All others are inactive.');
+            $this->exec("dbmail-sievecmd -u $userName -a script.sieve", 'Script [script.sieve] is now active. All others are inactive.');
     }
 
     /**

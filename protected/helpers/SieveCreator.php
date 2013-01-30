@@ -43,12 +43,12 @@ class SieveCreator
      */
     protected static function generateRequireHeader($require)
     {
-        $requireStr = '';
+        $requireArr = array();
         foreach (array_keys($require) as $requireElement) {
-            $requireStr[] = "\"$requireElement\"";
+            $requireArr[] = "\"$requireElement\"";
         }
-        $requireStr = implode(', ', $requireStr);
-        if (count($require) > 1)
+        $requireStr = implode(', ', $requireArr);
+        if (count($requireArr) > 1)
             $requireStr = '['.$requireStr.']';
 
         return $requireStr ? "require $requireStr;\n\n" : '';

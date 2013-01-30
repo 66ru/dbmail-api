@@ -15,14 +15,11 @@ class DBMailClient extends CComponent
     public function getScript($userName)
     {
         $userName = escapeshellarg($userName);
-        $cmd = "EDITOR=cat dbmail-sievecmd -u $userName -e";
-        $output = $this->exec($cmd);
-        if (end($output) == 'No active script found!')
+        try {
+            $output = $this->exec("dbmail-sievecmd -u $userName -c script.sieve");
+        } catch (DBMailClientException $e){
             return '';
-        if (end($output) == 'File not modified, canceling.')
-            throw new DBMailClientException("'$cmd' returned wrong output: ".implode("\n", $output));
-
-        array_pop($output);
+        }
 
         return implode("\n", $output);
     }

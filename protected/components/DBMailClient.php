@@ -32,6 +32,8 @@ class DBMailClient extends CComponent
      */
     public function writeScript($userName, $script)
     {
+        Yii::log("writing script to user $userName: $script");
+
         $userName = escapeshellarg($userName);
         $this->exec("dbmail-sievecmd -u $userName -r script.sieve", 'Script [script.sieve] deleted.');
 

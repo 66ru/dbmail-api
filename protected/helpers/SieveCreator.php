@@ -114,7 +114,7 @@ class SieveCreator
      * @param string[] $require
      * @return string my be empty
      */
-    protected static function getCondition($rule, $attribute, &$require)
+    protected static function getCondition($attribute, $rule, &$require)
     {
         if (in_array($attribute, array('From', 'Subject', 'Any To or Cc'))) {
             if (empty($rule['value']))

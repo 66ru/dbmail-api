@@ -10,12 +10,11 @@ class SieveCreator
      */
     public static function generateSieveScript($ruleName, $rules, $actions)
     {
-        $require = array();
+        $requireArr = array();
 
-        $actions = self::getActions($actions, $require);
-        $conditions = self::getConditions($rules, $require);
-        $requireMeta = json_encode($require);
-        $require = self::generateRequireHeader($require);
+        $actions = self::getActions($actions, $requireArr);
+        $conditions = self::getConditions($rules, $requireArr);
+        $require = self::generateRequireHeader($requireArr);
 
         $actions = implode(";\n    ", $actions);
 
@@ -26,12 +25,14 @@ class SieveCreator
             $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
         $conditions = implode("\n", $conditionsArr);
 
-        $sieve = $require . "#rule=$ruleName\n#require=$requireMeta\n";
+        $sieve = $require . "#rule=$ruleName\n";
+        if (count($requireArr) > 1)
+            $sieve.= '#require='.json_encode($requireArr)."\n";
+
         if ($actions && $conditions) {
             if (count($rules) > 1)
-                $sieve .= "if allof($conditions) {\n    $actions;\n}\n\n";
-            else
-                $sieve .= "if $conditions {\n    $actions;\n}\n\n";
+                $conditions = "allof($conditions)";
+            $sieve .= "if $conditions {\n    $actions;\n}\n\n";
         }
 
         return $sieve;
@@ -221,7 +222,7 @@ class SieveCreator
         // combines require header
         if (preg_match_all('/#require=(.*?)$/m', $sieve, $matches)) {
             $require = array();
-            foreach ($matches[0] as $match) {
+            foreach ($matches[1] as $match) {
                 $modules = json_decode($match, true);
                 $require+= $modules;
             }

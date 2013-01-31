@@ -26,7 +26,7 @@ class SieveCreator
         $conditions = implode("\n", $conditionsArr);
 
         $sieve = $require . "#rule=$ruleName\n";
-        if (count($requireArr) > 1)
+        if (!empty($requireArr))
             $sieve .= '#require=' . json_encode($requireArr) . "\n";
 
         if ($actions && $conditions) {
@@ -222,6 +222,9 @@ class SieveCreator
 
     protected static function rebuildRequireHeader($script)
     {
+        // delete old require headers
+        $script = preg_replace('/^require.+?$\s+/ms', '', $script);
+
         if (preg_match_all('/^#require=(.*?)$/ms', $script, $matches)) {
             $require = array();
             foreach ($matches[1] as $match) {
@@ -229,9 +232,6 @@ class SieveCreator
                 $require += $modules;
             }
             $require = array_unique($require);
-
-            // delete old require headers
-            $script = preg_replace('/^require.+?$\s+/ms', '', $script);
 
             $require = SieveCreator::generateRequireHeader($require);
             $script = $require . $script;

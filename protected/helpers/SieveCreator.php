@@ -220,7 +220,7 @@ class SieveCreator
         $sieve = $oldScript . $newScript;
 
         // combines require header
-        if (preg_match_all('/#require=(.*?)$/m', $sieve, $matches)) {
+        if (preg_match_all('/^#require=(.*?)$/ms', $sieve, $matches)) {
             $require = array();
             foreach ($matches[1] as $match) {
                 $modules = json_decode($match, true);
@@ -229,7 +229,7 @@ class SieveCreator
             $require = array_unique($require);
 
             // delete old require headers
-            $sieve = preg_replace('#^require.+?$\s+#ms', '', $sieve);
+            $sieve = preg_replace('/^require.+?$\s+/ms', '', $sieve);
 
             $require = SieveCreator::generateRequireHeader($require);
             $sieve = $require.$sieve;

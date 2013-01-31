@@ -39,7 +39,7 @@ class SiteController extends Controller
         $ruleName = preg_quote($_POST['ruleName'], '/');
 
         $script = $this->dbMailClient->getScript($userName);
-        preg_replace('/#rule='.$ruleName.'.*?\n\n/s', '', $script);
+        preg_replace('/^#rule='.$ruleName.'.*?\n\n/ms', '', $script);
         $this->dbMailClient->writeScript($userName, $script);
 
         $this->sendAnswer(array('status' => 'ok'));
@@ -51,7 +51,7 @@ class SiteController extends Controller
             $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
         $script = $this->dbMailClient->getScript($_POST['userName']);
-        preg_match_all('/#rule=(.*?)$/m', $script, $matches);
+        preg_match_all('/^#rule=(.*?)$/m', $script, $matches);
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
     }

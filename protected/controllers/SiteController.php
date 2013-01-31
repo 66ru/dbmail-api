@@ -36,10 +36,9 @@ class SiteController extends Controller
             $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
         $userName = $_POST['userName'];
-        $ruleName = preg_quote($_POST['ruleName'], '/');
 
         $script = $this->dbMailClient->getScript($userName);
-        preg_replace('/^#rule='.$ruleName.'.*?\n\n/ms', '', $script);
+        $script = SieveCreator::removeRule($_POST['ruleName'], $script);
         $this->dbMailClient->writeScript($userName, $script);
 
         $this->sendAnswer(array('status' => 'ok'));

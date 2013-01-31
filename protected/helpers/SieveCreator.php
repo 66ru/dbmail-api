@@ -1,6 +1,6 @@
 <?php
 
-class SieveCreator 
+class SieveCreator
 {
     /**
      * @param string $ruleName
@@ -21,13 +21,13 @@ class SieveCreator
         // align conditions
         $conditions = implode(",\n", $conditions);
         $conditionsArr = array();
-        foreach(explode("\n", $conditions) as $condition)
+        foreach (explode("\n", $conditions) as $condition)
             $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
         $conditions = implode("\n", $conditionsArr);
 
         $sieve = $require . "#rule=$ruleName\n";
         if (count($requireArr) > 1)
-            $sieve.= '#require='.json_encode($requireArr)."\n";
+            $sieve .= '#require=' . json_encode($requireArr) . "\n";
 
         if ($actions && $conditions) {
             if (count($rules) > 1)
@@ -36,23 +36,6 @@ class SieveCreator
         }
 
         return $sieve;
-    }
-
-    /**
-     * @param string[] $require
-     * @return string
-     */
-    protected static function generateRequireHeader($require)
-    {
-        $requireArr = array();
-        foreach (array_keys($require) as $requireElement) {
-            $requireArr[] = "\"$requireElement\"";
-        }
-        $requireStr = implode(', ', $requireArr);
-        if (count($requireArr) > 1)
-            $requireStr = '['.$requireStr.']';
-
-        return $requireStr ? "require $requireStr;\n\n" : '';
     }
 
     /**
@@ -65,7 +48,7 @@ class SieveCreator
         $actionsArr = array();
         foreach ($actions as $action => $attribute) {
             if ($action == 'Discard') {
-                $actionsArr[] =  'discard';
+                $actionsArr[] = 'discard';
             } else if ($action == 'Mirror to') {
                 if (!preg_match('#^.+?@.+?\..+?$#', $attribute))
                     continue;
@@ -78,9 +61,9 @@ class SieveCreator
                 $require['imap4flags'] = true;
                 $action = 'setflag';
                 if ($attribute == 'Flagged')
-                    $action.=' "\\\\Flagged"';
+                    $action .= ' "\\\\Flagged"';
                 elseif ($attribute == 'Read')
-                    $action.=' "\\\\Seen"';
+                    $action .= ' "\\\\Seen"';
                 $actionsArr[] = $action;
             } else if ($action == 'Store in') {
                 $attribute = self::sieveEscape($attribute);
@@ -124,7 +107,7 @@ class SieveCreator
                 return '';
 
             // if value surrounded by asterisks - convert operation to internal kind
-            if (strpos($rule['value'], '*') === 0 && strrpos($rule['value'], '*') === strlen($rule['value'])-1) {
+            if (strpos($rule['value'], '*') === 0 && strrpos($rule['value'], '*') === strlen($rule['value']) - 1) {
                 if ($rule['operation'] == 'is') {
                     $rule['operation'] = 'in';
                     $rule['value'] = trim($rule['value'], '*');
@@ -153,7 +136,7 @@ class SieveCreator
 
             $text = self::sieveEscape($rule['value']);
             $text = "\"$text\"";
-            $condition.= " $attribute $text";
+            $condition .= " $attribute $text";
 
             return $condition;
         } else if ($attribute == 'Message Size') {
@@ -196,7 +179,7 @@ class SieveCreator
      * @param $countRules int
      * @return string
      */
-    protected function alignCondition($condition, $countRules)
+    protected static function alignCondition($condition, $countRules)
     {
         $conditionArr = array();
         if ($countRules > 1)
@@ -204,7 +187,7 @@ class SieveCreator
         else
             $align = '   ';
         foreach (explode("\n", $condition) as $line) {
-            $conditionArr[] = $align.$line;
+            $conditionArr[] = $align . $line;
         }
 
         return implode("\n", $conditionArr);
@@ -217,24 +200,51 @@ class SieveCreator
      */
     public static function mergeScripts($oldScript, $newScript)
     {
-        $sieve = $oldScript . $newScript;
+        return self::rebuildRequireHeader($oldScript . $newScript);
+    }
 
-        // combines require header
-        if (preg_match_all('/^#require=(.*?)$/ms', $sieve, $matches)) {
+    /**
+     * @param string[] $require
+     * @return string
+     */
+    protected static function generateRequireHeader($require)
+    {
+        $requireArr = array();
+        foreach (array_keys($require) as $requireElement) {
+            $requireArr[] = "\"$requireElement\"";
+        }
+        $requireStr = implode(', ', $requireArr);
+        if (count($requireArr) > 1)
+            $requireStr = '[' . $requireStr . ']';
+
+        return $requireStr ? "require $requireStr;\n\n" : '';
+    }
+
+    protected static function rebuildRequireHeader($script)
+    {
+        if (preg_match_all('/^#require=(.*?)$/ms', $script, $matches)) {
             $require = array();
             foreach ($matches[1] as $match) {
                 $modules = json_decode($match, true);
-                $require+= $modules;
+                $require += $modules;
             }
             $require = array_unique($require);
 
             // delete old require headers
-            $sieve = preg_replace('/^require.+?$\s+/ms', '', $sieve);
+            $script = preg_replace('/^require.+?$\s+/ms', '', $script);
 
             $require = SieveCreator::generateRequireHeader($require);
-            $sieve = $require.$sieve;
+            $script = $require . $script;
         }
 
-        return $sieve;
+        return $script;
+    }
+
+    public static function removeRule($ruleName, $script)
+    {
+        $ruleName = preg_quote($ruleName, '/');
+        $script = preg_replace('/^#rule=' . $ruleName . '.*?\n\n/ms', '', $script);
+
+        return self::rebuildRequireHeader($script);
     }
 }

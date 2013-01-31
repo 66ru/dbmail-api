@@ -51,7 +51,7 @@ class SiteController extends Controller
             $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
 
         $script = $this->dbMailClient->getScript($_POST['userName']);
-        preg_match_all('/#rule=(.*?)$/', $script, $matches);
+        preg_match_all('/#rule=(.*?)$/m', $script, $matches);
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
     }

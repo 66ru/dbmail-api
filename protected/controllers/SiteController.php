@@ -24,6 +24,9 @@ class SiteController extends Controller
 
         $oldScript = $this->dbMailClient->getScript($userName);
         $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $rules, $actions);
+        if (!$newScript) {
+            throw new DBMailClientException('Произошла ошибка при создании фильтра');
+        }
         $newScript = SieveCreator::mergeScripts($oldScript, $newScript);
         $this->dbMailClient->writeScript($userName, $newScript);
 

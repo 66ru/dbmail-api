@@ -1,0 +1,5 @@
+#rule=
+if header :is "From" "from@mail.ru" {
+    discard;
+}
+

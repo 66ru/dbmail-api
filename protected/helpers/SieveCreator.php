@@ -25,17 +25,18 @@ class SieveCreator
             $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
         $conditions = implode("\n", $conditionsArr);
 
-        $sieve = $require . "#rule=$ruleName\n";
-        if (!empty($requireArr))
-            $sieve .= '#require=' . json_encode($requireArr) . "\n";
-
         if ($actions && $conditions) {
+            $sieve = $require . "#rule=$ruleName\n";
+            if (!empty($requireArr))
+                $sieve .= '#require=' . json_encode($requireArr) . "\n";
+
             if (count($rules) > 1)
                 $conditions = "allof($conditions)";
             $sieve .= "if $conditions {\n    $actions;\n}\n\n";
+            return $sieve;
+        } else {
+            return '';
         }
-
-        return $sieve;
     }
 
     /**
@@ -50,12 +51,12 @@ class SieveCreator
             if ($action == 'Discard') {
                 $actionsArr[] = 'discard';
             } else if ($action == 'Mirror to') {
-                if (!preg_match('#^.+?@.+?\..+?$#', $attribute))
+                if (!is_string($attribute) || !preg_match('#^.+?@.+?\..+?$#', $attribute))
                     continue;
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "redirect \"$attribute\"";
             } else if ($action == 'Mark') {
-                if (!in_array($attribute, array('Flagged', 'Read')))
+                if (!is_string($attribute) || !in_array($attribute, array('Flagged', 'Read')))
                     continue;
 
                 $require['imap4flags'] = true;
@@ -66,6 +67,8 @@ class SieveCreator
                     $action .= ' "\\\\Seen"';
                 $actionsArr[] = $action;
             } else if ($action == 'Store in') {
+                if (empty($attribute) || !is_string($attribute))
+                    continue;
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "fileinto \"$attribute\"";
                 $require['fileinto'] = true;

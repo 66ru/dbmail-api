@@ -31,7 +31,6 @@ class DBMailClient extends CComponent
     public function writeScript($userName, $script)
     {
         $userName = escapeshellarg($userName);
-        $this->exec("dbmail-sievecmd -u $userName -r script.sieve", 'Script [script.sieve] deleted.');
 
         $tempFile = tempnam(sys_get_temp_dir(), 'sieve-');
         file_put_contents($tempFile, $script);
@@ -53,7 +52,7 @@ class DBMailClient extends CComponent
         ob_start();
         passthru($cmd, $returnVal);
         $output = ob_get_clean();
-        $lines = explode("\n", $output);
+        $lines = explode("\n", trim($output, " \r\n"));
         if ($returnVal)
             throw new DBMailClientException("'$cmd' returned code $returnVal with message: $output");
         if (!empty($expectedLastString) && end($lines) != $expectedLastString)

@@ -210,7 +210,7 @@ class SieveCreator
     protected static function generateRequireHeader($require)
     {
         $requireArr = array();
-        foreach (array_keys($require) as $requireElement) {
+        foreach ($require as $requireElement) {
             $requireArr[] = "\"$requireElement\"";
         }
         $requireStr = implode(', ', $requireArr);
@@ -231,7 +231,7 @@ class SieveCreator
                 $modules = json_decode($match, true);
                 $require += $modules;
             }
-            $require = array_unique($require);
+            $require = array_unique(array_keys($require));
 
             $require = SieveCreator::generateRequireHeader($require);
             $script = $require . $script;

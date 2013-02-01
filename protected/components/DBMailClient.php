@@ -21,7 +21,7 @@ class DBMailClient extends CComponent
             return '';
         }
 
-        return implode("\n", $output);
+        return $output;
     }
 
     /**
@@ -50,7 +50,9 @@ class DBMailClient extends CComponent
      */
     protected function exec($cmd, $expectedLastString = null)
     {
-        exec($cmd, $output, $returnVal);
+        ob_start();
+        passthru($cmd, $returnVal);
+        $output = ob_get_clean();
         if ($returnVal)
             throw new DBMailClientException("'$cmd' returned code $returnVal with message: ".implode("\n", $output));
         if (!empty($expectedLastString) && end($output) != $expectedLastString)

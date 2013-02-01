@@ -46,17 +46,18 @@ class DBMailClient extends CComponent
      * @param $cmd string
      * @param null|string $expectedLastString
      * @throws DBMailClientException
-     * @return string[]
+     * @return string
      */
     protected function exec($cmd, $expectedLastString = null)
     {
         ob_start();
         passthru($cmd, $returnVal);
         $output = ob_get_clean();
+        $lines = explode("\n", $output);
         if ($returnVal)
-            throw new DBMailClientException("'$cmd' returned code $returnVal with message: ".implode("\n", $output));
-        if (!empty($expectedLastString) && end($output) != $expectedLastString)
-            throw new DBMailClientException("'$cmd' returned wrong output: ".implode("\n", $output));
+            throw new DBMailClientException("'$cmd' returned code $returnVal with message: $output");
+        if (!empty($expectedLastString) && end($lines) != $expectedLastString)
+            throw new DBMailClientException("'$cmd' returned wrong output: $output");
 
         return $output;
     }

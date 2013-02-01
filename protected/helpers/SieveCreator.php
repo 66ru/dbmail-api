@@ -14,7 +14,7 @@ class SieveCreator
 
         $actions = self::getActions($actions, $requireArr);
         $conditions = self::getConditions($rules, $requireArr);
-        $require = self::generateRequireHeader($requireArr);
+        $require = self::generateRequireHeader(array_keys($requireArr));
 
         $actions = implode(";\n    ", $actions);
 

@@ -55,36 +55,36 @@ class SieveCreatorTest extends CTestCase
 
     public function assertGenerate($ruleName)
     {
-        list($rules, $actions) = require(__DIR__."/../fixtures/$ruleName.php");
+        list($rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
         $script = SieveCreator::generateSieveScript($ruleName, $rules, $actions);
-        $expected = file_get_contents(__DIR__."/../fixtures/$ruleName.txt");
+        $expected = file_get_contents(__DIR__ . "/../fixtures/$ruleName.txt");
         $this->assertEquals($expected, $script);
     }
 
     public function assertMerge($ruleName1, $ruleName2)
     {
-        $script1 = file_get_contents(__DIR__."/../fixtures/$ruleName1.txt");
-        $script2 = file_get_contents(__DIR__."/../fixtures/$ruleName2.txt");
+        $script1 = file_get_contents(__DIR__ . "/../fixtures/$ruleName1.txt");
+        $script2 = file_get_contents(__DIR__ . "/../fixtures/$ruleName2.txt");
         $script = SieveCreator::mergeScripts($script1, $script2);
-        $expectedRuleName = 'rule'.preg_replace("/[^0-9]/", '', $ruleName1).preg_replace("/[^0-9]/", '', $ruleName2);
-        $expected = file_get_contents(__DIR__."/../fixtures/$expectedRuleName.txt");
+        $expectedRuleName = 'rule' . preg_replace("/[^0-9]/", '', $ruleName1) . preg_replace("/[^0-9]/", '', $ruleName2);
+        $expected = file_get_contents(__DIR__ . "/../fixtures/$expectedRuleName.txt");
 
         $this->assertEquals($expected, $script);
     }
 
     public function assertDelete($ruleName, $deleteRuleName)
     {
-        $merged = file_get_contents(__DIR__."/../fixtures/$ruleName.txt");
+        $merged = file_get_contents(__DIR__ . "/../fixtures/$ruleName.txt");
         $script = SieveCreator::removeRule($deleteRuleName, $merged);
 
-        $expectedRuleName = 'rule'.str_replace(preg_replace("/[^0-9]/", '', $deleteRuleName), '', preg_replace("/[^0-9]/", '', $ruleName));
-        $expected = file_get_contents(__DIR__."/../fixtures/$expectedRuleName.txt");
+        $expectedRuleName = 'rule' . str_replace(preg_replace("/[^0-9]/", '', $deleteRuleName), '', preg_replace("/[^0-9]/", '', $ruleName));
+        $expected = file_get_contents(__DIR__ . "/../fixtures/$expectedRuleName.txt");
         $this->assertEquals($expected, $script);
     }
 
     public function assertFailGenerate($ruleName)
     {
-        list($rules, $actions) = require(__DIR__."/../fixtures/$ruleName.php");
+        list($rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
         $script = SieveCreator::generateSieveScript($ruleName, $rules, $actions);
         $expected = str_replace('#rule=', '#rule=' . $ruleName, '');
         $this->assertEquals($expected, $script);

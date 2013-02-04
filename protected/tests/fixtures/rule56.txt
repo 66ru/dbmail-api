@@ -1,3 +1,9 @@
+#rule=rule5
+if allof(size :over 154,
+         size :under 156) {
+    discard;
+}
+
 #rule=rule6
 if allof(size :over 10000,
          header :contains "From" "from") {

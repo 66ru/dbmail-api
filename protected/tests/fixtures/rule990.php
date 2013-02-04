@@ -3,11 +3,11 @@
 return array(
     array(
         'From' => array(
-            'operation' => 'is not',
+            'missing operation' => 'is',
             'value' => 'from@mail.ru'
         )
     ),
     array(
-        'Mark' => 'Flagged'
+        'Discard' => true
     )
 );

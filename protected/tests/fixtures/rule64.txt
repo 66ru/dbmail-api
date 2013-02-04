@@ -1,5 +1,11 @@
 require "imap4flags";
 
+#rule=rule6
+if allof(size :over 10000,
+         header :contains "From" "from") {
+    redirect "to@mail.ru";
+}
+
 #rule=rule4
 #require={"imap4flags":true}
 if not header :contains ["Cc", "To"] "from" {

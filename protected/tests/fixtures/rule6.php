@@ -2,9 +2,13 @@
 
 return array(
     array(
+        'Message Size' => array(
+            'operation' => 'greater than',
+            'value' => '10000'
+        ),
         'From' => array(
             'operation' => 'is',
-            'value' => 'from@mail.ru'
+            'value' => '*from*'
         )
     ),
     array(

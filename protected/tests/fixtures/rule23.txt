@@ -1,0 +1,14 @@
+require ["fileinto", "imap4flags"];
+
+#rule=rule2
+#require={"fileinto":true}
+if header :contains "Subject" "bjec" {
+    fileinto "Deleted Messages";
+}
+
+#rule=rule3
+#require={"imap4flags":true}
+if not header :is "From" "from@mail.ru" {
+    setflag "\\Flagged";
+}
+

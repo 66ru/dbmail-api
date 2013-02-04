@@ -2,12 +2,12 @@
 
 return array(
     array(
-        'From' => array(
-            'operation' => 'is not',
+        'wrong attribute' => array(
+            'operation' => 'is',
             'value' => 'from@mail.ru'
         )
     ),
     array(
-        'Mark' => 'Flagged'
+        'Discard' => true
     )
 );

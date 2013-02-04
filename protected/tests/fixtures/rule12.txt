@@ -6,3 +6,9 @@ if header :is "From" "from@mail.ru" {
     fileinto "INBOX";
 }
 
+#rule=rule2
+#require={"fileinto":true}
+if header :contains "Subject" "bjec" {
+    fileinto "Deleted Messages";
+}
+

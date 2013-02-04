@@ -1,8 +1,8 @@
 require "fileinto";
 
-#rule=
+#rule=rule2
 #require={"fileinto":true}
-if header :is "From" "from@mail.ru" {
+if header :contains "Subject" "bjec" {
     fileinto "Deleted Messages";
 }
 

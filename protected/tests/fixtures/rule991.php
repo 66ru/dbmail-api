@@ -2,9 +2,9 @@
 
 return array(
     array(
-        'Message Size' => array(
+        'From' => array(
             'operation' => 'is',
-            'value' => '155'
+            'value' => array('wrong value format')
         )
     ),
     array(

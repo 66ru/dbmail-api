@@ -6,3 +6,9 @@ if not header :contains ["Cc", "To"] "from" {
     setflag "\\Seen";
 }
 
+#rule=rule5
+if allof(size :over 154,
+         size :under 156) {
+    discard;
+}
+

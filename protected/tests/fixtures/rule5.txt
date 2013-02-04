@@ -1,5 +1,6 @@
-#rule=
-if header :is "From" "from@mail.ru" {
+#rule=rule5
+if allof(size :over 154,
+         size :under 156) {
     discard;
 }
 

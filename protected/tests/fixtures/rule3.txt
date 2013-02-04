@@ -1,8 +1,8 @@
 require "imap4flags";
 
-#rule=
+#rule=rule3
 #require={"imap4flags":true}
-if header :is "From" "from@mail.ru" {
+if not header :is "From" "from@mail.ru" {
     setflag "\\Flagged";
 }
 

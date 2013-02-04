@@ -2,12 +2,12 @@
 
 return array(
     array(
-        'Subject' => array(
+        'From' => array(
             'operation' => 'is',
-            'value' => '*bjec*'
+            'missing value' => ''
         )
     ),
     array(
-        'Store in' => 'Deleted Messages'
+        'Discard' => true
     )
 );

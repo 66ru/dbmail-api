@@ -2,9 +2,9 @@
 
 return array(
     array(
-        'From' => array(
-            'operation' => 'is',
-            'value' => 'from@mail.ru'
+        'Any To or Cc' => array(
+            'operation' => 'is not',
+            'value' => '*from*'
         )
     ),
     array(

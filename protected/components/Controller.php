@@ -8,5 +8,6 @@ class Controller extends CController
     public function sendAnswer($data)
     {
         echo json_encode($data);
+        Yii::app()->end();
     }
 }

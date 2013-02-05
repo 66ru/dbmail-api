@@ -58,6 +58,54 @@ class SiteController extends Controller
         $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
     }
 
+//    public function actionGetFolders()
+//    {
+//        if (empty($_POST['userName']))
+//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+//
+//        $user = $this->getUserModel();
+//        $this->sendAnswer(array('status' => 'ok', 'rules' => array_keys(CHtml::listData($user->mailboxes, 'name', 'name'))));
+//    }
+//
+//    public function actionCreateFolder()
+//    {
+//        if (empty($_POST['userName']) || empty($_POST['folderName']))
+//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+//
+//        $user = $this->getUserModel();
+//        $mailbox = new Mailbox();
+//        $mailbox->name = $_POST['folderName'];
+//        $mailbox->owner_idnr = $user->user_idnr;
+//        if (!$mailbox->save())
+//            $this->sendAnswer(array('status' => 'error', 'error' => print_r($mailbox->getErrors(), true)));
+//
+//        $this->sendAnswer(array('status' => 'ok'));
+//    }
+//
+//    public function actionDeleteFolder()
+//    {
+//        if (empty($_POST['userName']) || empty($_POST['folderName']))
+//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+//
+//        $user = $this->getUserModel();
+//        if (!Mailbox::model()->deleteAllByAttributes(array('name' => $_POST['folderName'], 'owner_idnr' => $user->user_idnr)))
+//            $this->sendAnswer(array('status' => 'error', 'error' => 'mailbox not found'));
+//
+//        $this->sendAnswer(array('status' => 'ok'));
+//    }
+//
+//    /**
+//     * @return User
+//     */
+//    protected function getUserModel()
+//    {
+//        $user = User::model()->findByName($_POST['userName']);
+//        if (empty($user))
+//            $this->sendAnswer(array('status' => 'error', 'error' => 'user not found'));
+//
+//        return $user;
+//    }
+
     public function actionError()
     {
         if ($error = Yii::app()->errorHandler->error) {

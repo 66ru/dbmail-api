@@ -39,11 +39,12 @@ return array(
         ),
 //        'db' => array(
 //            'class' => 'CDbConnection',
-//            'connectionString' => 'mysql:host=127.0.0.1;dbname=ekabu',
+//            'connectionString' => "mysql:host={$params['dbMailHost']};dbname=dbmail",
 //            'emulatePrepare' => true,
-//            'username' => 'root',
-//            'password' => '123',
+//            'username' => $params['dbMailUser'],
+//            'password' => $params['dbMailPassword'],
 //            'charset' => 'utf8',
+//            'tablePrefix' => 'dbmail_',
 //        ),
         'errorHandler' => array(
             'errorAction' => 'site/error',

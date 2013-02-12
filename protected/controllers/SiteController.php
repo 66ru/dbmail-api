@@ -74,7 +74,11 @@ class SiteController extends Controller
         if (!$config) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));
         }
-        $ret = file_put_contents(GetmailCreator::getFileName($ruleName), $config);
+        $ruleFileName = GetmailCreator::getFileName($ruleName);
+        $ruleDir = pathinfo($ruleFileName, PATHINFO_DIRNAME);
+        if (!file_exists($ruleDir))
+            mkdir($ruleDir, 0777, true);
+        $ret = file_put_contents($ruleFileName, $config);
         if (!$ret) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while writing getmail config'));
         }

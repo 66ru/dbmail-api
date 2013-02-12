@@ -53,7 +53,10 @@ class SiteController extends Controller
 
     public function actionAddGetMailRule()
     {
-        $this->checkRequiredFields(array('userName', 'host', 'email', 'password', 'delete'));
+        $this->checkRequiredFields(array('userName', 'host', 'email', 'password'));
+
+        if (!isset($_POST['delete']))
+            $_POST['delete'] = false;
 
         $ruleName = GetmailCreator::getRuleName(
             $_POST['host'],
@@ -120,7 +123,7 @@ class SiteController extends Controller
     {
         foreach ($requiredFields as $field) {
             if (empty($_POST[$field])) {
-                $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+                throw new CHttpException(400, 'wrong input');
             }
         }
     }

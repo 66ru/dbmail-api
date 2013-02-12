@@ -14,48 +14,85 @@ class SiteController extends Controller
 
     public function actionCreateRule()
     {
-        $rules = @json_decode($_POST['rules'], true);
-        $actions = @json_decode($_POST['actions'], true);
+        $_POST['rules'] = @json_decode($_POST['rules'], true);
+        $_POST['actions'] = @json_decode($_POST['actions'], true);
 
-        if (empty($_POST['userName']) || empty($_POST['ruleName']) || empty($rules) || empty($actions))
-            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+        $this->checkRequiredFields(array('userName', 'ruleName', 'rules', 'actions'));
 
-        $userName = $_POST['userName'];
-
-        $oldScript = $this->dbMailClient->getScript($userName);
-        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $rules, $actions);
+        $oldScript = $this->dbMailClient->getScript($_POST['userName']);
+        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $_POST['rules'], $_POST['actions']);
         if (!$newScript) {
             throw new DBMailClientException('Произошла ошибка при создании фильтра');
         }
         $newScript = SieveCreator::mergeScripts($oldScript, $newScript);
-        $this->dbMailClient->writeScript($userName, $newScript);
+        $this->dbMailClient->writeScript($_POST['userName'], $newScript);
 
         $this->sendAnswer(array('status' => 'ok'));
     }
 
     public function actionDeleteRule()
     {
-        if (empty($_POST['userName']) || empty($_POST['ruleName']))
-            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+        $this->checkRequiredFields(array('userName', 'ruleName'));
 
-        $userName = $_POST['userName'];
-
-        $script = $this->dbMailClient->getScript($userName);
+        $script = $this->dbMailClient->getScript($_POST['userName']);
         $script = SieveCreator::removeRule($_POST['ruleName'], $script);
-        $this->dbMailClient->writeScript($userName, $script);
+        $this->dbMailClient->writeScript($_POST['userName'], $script);
 
         $this->sendAnswer(array('status' => 'ok'));
     }
 
     public function actionGetRules()
     {
-        if (empty($_POST['userName']))
-            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+        $this->checkRequiredFields(array('userName'));
 
         $script = $this->dbMailClient->getScript($_POST['userName']);
         preg_match_all('/^#rule=(.*?)$/m', $script, $matches);
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
+    }
+
+    public function actionAddGetMailRule()
+    {
+        $this->checkRequiredFields(array('userName', 'host', 'email', 'password', 'delete'));
+
+        $config = GetmailCreator::getConfig($_POST['host'], $_POST['email'], $_POST['password'], $_POST['userName'], $_POST['delete']);
+        if (!$config) {
+            $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));
+        }
+        $ret = file_put_contents(
+            GetmailCreator::getRuleFileName($_POST['host'], $_POST['email'], $_POST['password'], $_POST['userName']),
+            $config
+        );
+        if (!$ret) {
+            $this->sendAnswer(array('status' => 'error', 'error' => 'error while writing getmail config'));
+        }
+
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
+    public function actionRemoveGetMailRule()
+    {
+        $this->checkRequiredFields(array('ruleName'));
+
+        $filename = GetmailCreator::getFileNameByRule($_POST['ruleName']);
+        if (file_exists($filename)) {
+            if (!unlink($filename)) {
+                $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
+            }
+        } else {
+            $this->sendAnswer(array('status' => 'error', 'error' => 'rule not found'));
+        }
+
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
+    public function checkRequiredFields($requiredFields)
+    {
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
+            }
+        }
     }
 
 //    public function actionGetFolders()

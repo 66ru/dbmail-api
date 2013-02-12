@@ -14,8 +14,9 @@ class GetmailCreator
     {
         if (strpos($dbMailUserName, '"') !== false ||
             strpos($dbMailUserName, '/') !== false
-        )
+        ) {
             return false;
+        }
 
         $ruleName = self::getRuleName($host, $email, $password, $dbMailUserName);
         $logPath = self::getLogFileName($ruleName);
@@ -47,28 +48,16 @@ delete = $delete";
      * @param string $dbMailUserName
      * @return string
      */
-    protected static function getRuleName($host, $email, $password, $dbMailUserName)
+    public static function getRuleName($host, $email, $password, $dbMailUserName)
     {
         return $dbMailUserName . '-' . md5($host . $email . $password);
-    }
-
-    /**
-     * @param string $host
-     * @param string $email
-     * @param string $password
-     * @param string $dbMailUserName
-     * @return string
-     */
-    public static function getRuleFileName($host, $email, $password, $dbMailUserName)
-    {
-        return self::getFileNameByRule(self::getRuleName($host, $email, $password, $dbMailUserName));
     }
 
     /**
      * @param string $ruleName
      * @return string
      */
-    public static function getFileNameByRule($ruleName)
+    public static function getFileName($ruleName)
     {
         return self::getConfigsDir() . self::getIntermediatePath($ruleName) . $ruleName;
     }
@@ -85,14 +74,21 @@ delete = $delete";
      */
     public static function getLogFileName($ruleName)
     {
-        return self::getFileNameByRule($ruleName).'.log';
+        return self::getFileName($ruleName) . '.log';
     }
 
-    protected static function getIntermediatePath($ruleName)
+    /**
+     * @param string $ruleName
+     * @return string
+     */
+    public static function getIntermediatePath($ruleName)
     {
+        $dbMailUserName = explode('-', $ruleName);
+        $subDirMask = md5($dbMailUserName[0]);
+
         $path = '';
         for ($i = 0; $i < 2; $i++) {
-            $path .= substr($ruleName, $i * 2, 2) . '/';
+            $path .= substr($subDirMask, $i * 2, 2) . '/';
         }
 
         return $path;

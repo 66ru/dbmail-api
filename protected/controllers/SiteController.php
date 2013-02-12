@@ -55,26 +55,40 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('userName', 'host', 'email', 'password', 'delete'));
 
-        $config = GetmailCreator::getConfig($_POST['host'], $_POST['email'], $_POST['password'], $_POST['userName'], $_POST['delete']);
+        $ruleName = GetmailCreator::getRuleName(
+            $_POST['host'],
+            $_POST['email'],
+            $_POST['password'],
+            $_POST['userName']
+        );
+        $config = GetmailCreator::getConfig(
+            $_POST['host'],
+            $_POST['email'],
+            $_POST['password'],
+            $_POST['userName'],
+            $_POST['delete']
+        );
         if (!$config) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));
         }
-        $ret = file_put_contents(
-            GetmailCreator::getRuleFileName($_POST['host'], $_POST['email'], $_POST['password'], $_POST['userName']),
-            $config
-        );
+        $ret = file_put_contents(GetmailCreator::getFileName($ruleName), $config);
         if (!$ret) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while writing getmail config'));
         }
 
-        $this->sendAnswer(array('status' => 'ok'));
+        $this->sendAnswer(
+            array(
+                'status' => 'ok',
+                'ruleName' => $ruleName
+            )
+        );
     }
 
     public function actionRemoveGetMailRule()
     {
         $this->checkRequiredFields(array('ruleName'));
 
-        $filename = GetmailCreator::getFileNameByRule($_POST['ruleName']);
+        $filename = GetmailCreator::getFileName($_POST['ruleName']);
         if (file_exists($filename)) {
             if (!unlink($filename)) {
                 $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
@@ -84,6 +98,22 @@ class SiteController extends Controller
         }
 
         $this->sendAnswer(array('status' => 'ok'));
+    }
+
+    public function actionListGetMailRules()
+    {
+        $this->checkRequiredFields(array('userName'));
+
+        $startDir = GetmailCreator::getConfigsDir() . GetmailCreator::getIntermediatePath($_POST['userName'].'-null');
+
+        $rules = array();
+        $files = glob($startDir.'/'.$_POST['userName'].'-*');
+        array_filter($files, function($value) use ($rules) {
+            if (strpos($value, '.log') === false)
+                $rules[] = $value;
+        });
+
+        $this->sendAnswer(array('status' => 'ok', 'rules' => $rules));
     }
 
     public function checkRequiredFields($requiredFields)

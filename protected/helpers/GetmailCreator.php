@@ -20,6 +20,7 @@ class GetmailCreator
 
         $ruleName = self::getRuleName($host, $email, $password, $dbMailUserName);
         $logPath = self::getLogFileName($ruleName);
+        $dbmailDeliver = Yii::app()->params['dbmail-deliver'];
 
         $template = "[retriever]
 type = SimplePOP3Retriever
@@ -29,7 +30,7 @@ password = $password
 
 [destination]
 type = MDA_external
-path = /usr/sbin/dbmail-deliver
+path = $dbmailDeliver
 user = dbmail
 group = dbmail
 arguments = (\"-u\", \"$dbMailUserName\")
@@ -64,7 +65,7 @@ delete = $delete";
 
     public static function getConfigsDir()
     {
-        $configsDir = Yii::app()->runtimePath . '/gmConfig/';
+        $configsDir = Yii::app()->runtimePath . '/gmConfigs/';
         return $configsDir;
     }
 

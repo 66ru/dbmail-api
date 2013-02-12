@@ -21,6 +21,7 @@ class GetmailCreator
         $ruleName = self::getRuleName($host, $email, $password, $dbMailUserName);
         $logPath = self::getLogFileName($ruleName);
         $dbmailDeliver = Yii::app()->params['dbmail-deliver'];
+        $delete = $delete ? 1 : 0;
 
         $template = "[retriever]
 type = SimplePOP3Retriever

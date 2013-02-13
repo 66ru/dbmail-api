@@ -58,13 +58,13 @@ class SiteController extends Controller
         if (!isset($_POST['delete']))
             $_POST['delete'] = false;
 
-        $ruleName = GetmailCreator::getRuleName(
+        $ruleName = GetmailHelper::getRuleName(
             $_POST['host'],
             $_POST['email'],
             $_POST['password'],
             $_POST['userName']
         );
-        $config = GetmailCreator::getConfig(
+        $config = GetmailHelper::getConfig(
             $_POST['host'],
             $_POST['email'],
             $_POST['password'],
@@ -74,7 +74,7 @@ class SiteController extends Controller
         if (!$config) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));
         }
-        $ruleFileName = GetmailCreator::getFileName($ruleName);
+        $ruleFileName = GetmailHelper::getFileName($ruleName);
         $ruleDir = pathinfo($ruleFileName, PATHINFO_DIRNAME);
         if (!file_exists($ruleDir))
             mkdir($ruleDir, 0777, true);
@@ -95,7 +95,7 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('ruleName'));
 
-        $filename = GetmailCreator::getFileName($_POST['ruleName']);
+        $filename = GetmailHelper::getFileName($_POST['ruleName']);
         if (file_exists($filename)) {
             if (!unlink($filename)) {
                 $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
@@ -111,13 +111,13 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('userName'));
 
-        $startDir = GetmailCreator::getConfigsDir() . GetmailCreator::getIntermediatePath($_POST['userName'].'-null');
+        $startDir = GetmailHelper::getConfigsDir() . GetmailHelper::getIntermediatePath($_POST['userName'].'-null');
 
         $rules = array();
-        $files = glob($startDir.'/'.$_POST['userName'].'-*');
+        $files = glob($startDir.$_POST['userName'].'-*');
         array_filter($files, function($value) use ($rules) {
             if (strpos($value, '.log') === false)
-                $rules[] = $value;
+                $rules[$value] = GetmailHelper::getRuleStatus($value);
         });
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $rules));

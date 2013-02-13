@@ -1,7 +1,14 @@
 <?php
 
-class GetmailCreator
+class GetmailHelper
 {
+    const SUCCESS = 0;
+    const ERROR_NOT_YET = 1;
+    const ERROR_WRONG_PASSWORD = 2; //getmailOperationError error ?
+    const ERROR_CONNECTION_ERROR = 3;
+    const ERROR_WRONG_DOMAIN = 4;
+    const ERROR_UNKNOWN = 5;
+
     /**
      * @param string $host
      * @param string $email
@@ -94,5 +101,37 @@ delete = $delete";
         }
 
         return $path;
+    }
+
+    /**
+     * @param string $ruleName
+     * @return int
+     */
+    public static function getRuleStatus($ruleName)
+    {
+        $logFile = self::getLogFileName($ruleName);
+        if (!file_exists($logFile)) {
+            return self::ERROR_NOT_YET;
+        }
+
+        $line = exec("tail -n 1 $logFile", $output, $returnVal);
+
+        if (preg_match('/Password supplied for .*? is incorrect/', $line) ||
+            preg_match('/invalid password/', $line) ||
+            preg_match('/incorrect password/', $line)
+        ) {
+            return self::ERROR_WRONG_PASSWORD;
+        }
+        if (preg_match('/gaierror error/', $line)) {
+            return self::ERROR_WRONG_DOMAIN;
+        }
+        if (preg_match('/socket error/', $line)) {
+            return self::ERROR_CONNECTION_ERROR;
+        }
+        if (preg_match('/delivered to MDA_external command dbmail-deliver/', $line)) {
+            return self::SUCCESS;
+        }
+
+        return self::ERROR_UNKNOWN;
     }
 }

@@ -82,7 +82,7 @@ class GrabMailCommand extends CConsoleCommand
     protected function getConfigs($startDir = null)
     {
         if (!$startDir) {
-            $startDir = GetmailCreator::getConfigsDir();
+            $startDir = GetmailHelper::getConfigsDir();
         }
 
         if (false === $d = opendir($startDir)) {

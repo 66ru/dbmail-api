@@ -115,7 +115,7 @@ class SiteController extends Controller
 
         $rules = array();
         $files = glob($startDir.$_POST['userName'].'-*');
-        array_filter($files, function($value) use ($rules, $startDir) {
+        array_filter($files, function($value) use (&$rules, $startDir) {
             if (strpos($value, '.log') === false) {
                 $ruleName = substr($value, strlen($startDir));
                 $rules[$ruleName] = GetmailHelper::getRuleStatus($ruleName);

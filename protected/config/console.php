@@ -19,6 +19,12 @@ return array(
     'basePath' => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
     'name' => 'DBMail client',
 
+    'import' => array(
+        'application.helpers.*',
+        'application.models.*',
+        'application.components.*',
+    ),
+
     // preloading 'log' component
     'preload' => array('log'),
 

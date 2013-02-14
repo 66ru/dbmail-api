@@ -96,9 +96,13 @@ class SiteController extends Controller
         $this->checkRequiredFields(array('ruleName'));
 
         $filename = GetmailHelper::getFileName($_POST['ruleName']);
+        $logFilename = GetmailHelper::getLogFileName($_POST['ruleName']);
         if (file_exists($filename)) {
             if (!unlink($filename)) {
                 $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
+            }
+            if (file_exists($logFilename)) {
+                unlink($logFilename);
             }
         } else {
             $this->sendAnswer(array('status' => 'error', 'error' => 'rule not found'));

@@ -114,14 +114,12 @@ class GrabMailCommand extends CConsoleCommand
     protected function getCmdLineLimit()
     {
         ob_start();
-        passthru('xargs --show-limits --no-run-if-empty </dev/null', $returnVal);
+        passthru('xargs --show-limits --no-run-if-empty </dev/null 2>&1', $returnVal);
         $output = ob_get_clean();
 
-        if ($returnVal) {
-            throw new CException("xargs returned code $returnVal with message: $output");
-        }
-
-        if (!preg_match('/Maximum length of command we could actually use: (\d+)/', $output, $matches)) {
+        if ($returnVal ||
+            !preg_match('/Maximum length of command we could actually use: (\d+)/', $output, $matches)
+        ) {
             throw new CException("xargs returned code $returnVal with message: $output");
         }
 

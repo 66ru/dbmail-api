@@ -61,14 +61,24 @@ class GrabMailCommand extends CConsoleCommand
 
         if (is_array($res) && !empty($res)) {
             $latestStartDate = time();
+            $savedTime = $latestStartDate;
             foreach ($res as $file) {
+                $pid = file_get_contents($file);
+                if (!file_exists("/proc/$pid")) {
+                    unlink($file);
+                    continue;
+                }
+
                 $time = filemtime($file);
                 if ($time < $latestStartDate) {
                     $latestStartDate = $time;
                 }
             }
 
-            return $latestStartDate;
+            if ($latestStartDate == $savedTime)
+                return false;
+            else
+                return $latestStartDate;
         } else {
             return false;
         }

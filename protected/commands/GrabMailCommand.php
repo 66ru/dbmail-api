@@ -91,7 +91,7 @@ class GrabMailCommand extends CConsoleCommand
 
         $result = array();
         while ($entry = readdir($d)) {
-            if ($entry == '.' || $entry == '..') {
+            if (substr($entry, 0, 1) == '.') {
                 continue;
             }
             $entry = $startDir . $entry;

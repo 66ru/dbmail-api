@@ -91,9 +91,14 @@ class GrabMailCommand extends CConsoleCommand
 
         $result = array();
         while ($entry = readdir($d)) {
-            $entry = $startDir . '/' . $entry;
+            if (substr($entry, strlen($startDir)) == '.' ||
+                substr($entry, strlen($startDir)) == '..'
+            ) {
+                continue;
+            }
+            $entry = $startDir . $entry;
             if (is_dir($entry)) {
-                $result += $this->getConfigs($entry);
+                $result += $this->getConfigs($entry . '/');
             } else {
                 $result[] = $entry;
             }

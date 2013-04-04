@@ -4,7 +4,6 @@ class DBMailClient extends CComponent
 {
     public function init()
     {
-
     }
 
     /**
@@ -16,7 +15,7 @@ class DBMailClient extends CComponent
     {
         $userName = escapeshellarg($userName);
         try {
-            $output = $this->exec("dbmail-sievecmd -u $userName -c script.sieve");
+            $output = $this->exec(Yii::app()->params['dbmail-sievecmd'] . " -u $userName -c script.sieve");
         } catch (DBMailClientException $e){
             return '';
         }
@@ -34,12 +33,49 @@ class DBMailClient extends CComponent
 
         $tempFile = tempnam(sys_get_temp_dir(), 'sieve-');
         file_put_contents($tempFile, $script);
-        $output = $this->exec("dbmail-sievecmd -u $userName -i script.sieve $tempFile -y");
+        $output = $this->exec(Yii::app()->params['dbmail-sievecmd'] . " -u $userName -i script.sieve $tempFile -y");
         unlink($tempFile);
 
         $lines = explode("\n", trim($output, " \r\n"));
         if (strpos(end($lines), 'marked inactive') !== false)
-            $this->exec("dbmail-sievecmd -u $userName -a script.sieve", 'Script [script.sieve] is now active. All others are inactive.');
+            $this->exec(Yii::app()->params['dbmail-sievecmd'] . " -u $userName -a script.sieve", 'Script [script.sieve] is now active. All others are inactive.');
+    }
+
+    /**
+     * @param string $userName
+     * @param string $password
+     */
+    public function createUser($userName, $password)
+    {
+        $mailAlias = escapeshellarg($userName . '@' . Yii::app()->params['mailDomain']);
+        $userName = escapeshellarg($userName);
+        $password = escapeshellarg($password);
+        $this->exec(Yii::app()->params['dbmail-users'] . " -a $userName -w $password");
+        try {
+            $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -s $mailAlias");
+        } catch (DBMailClientException $e) {
+            $this->exec(Yii::app()->params['dbmail-users'] . " -d $userName");
+        }
+    }
+
+    /**
+     * @param string $userName
+     * @param string $password
+     */
+    public function changePassword($userName, $password)
+    {
+        $userName = escapeshellarg($userName);
+        $password = escapeshellarg($password);
+        $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -w $password");
+    }
+
+    /**
+     * @param string $userName
+     */
+    public function deleteUser($userName)
+    {
+        $userName = escapeshellarg($userName);
+        $this->exec(Yii::app()->params['dbmail-users'] . " -d $userName");
     }
 
     /**

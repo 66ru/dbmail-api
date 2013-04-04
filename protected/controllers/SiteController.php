@@ -41,6 +41,30 @@ class SiteController extends Controller
         $this->sendAnswer(array('status' => 'ok'));
     }
 
+    public function actionCreateUser()
+    {
+        $this->checkRequiredFields(array('userName', 'password'));
+
+        $this->dbMailClient->createUser($_POST['userName'], $_POST['password']);
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
+    public function actionChangePassword()
+    {
+        $this->checkRequiredFields(array('userName', 'password'));
+
+        $this->dbMailClient->changePassword($_POST['userName'], $_POST['password']);
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
+    public function actionDeleteUser()
+    {
+        $this->checkRequiredFields(array('userName'));
+
+        $this->dbMailClient->deleteUser($_POST['userName']);
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
     public function actionGetRules()
     {
         $this->checkRequiredFields(array('userName'));

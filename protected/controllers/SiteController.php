@@ -75,6 +75,27 @@ class SiteController extends Controller
         $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
     }
 
+    public function actionGetUnreadCount()
+    {
+        $this->checkRequiredFields(array('userName'));
+
+        /** @var CDbConnection $db */
+        $db = Yii::app()->db;
+        $unreadCount = $db->createCommand(
+            "SELECT count(*)
+            FROM dbmail_messages M
+            JOIN dbmail_mailboxes MB ON M.`mailbox_idnr` = MB.`mailbox_idnr`
+            JOIN dbmail_users U ON MB.`owner_idnr` = U.`user_idnr` AND U.`userid` = :username
+            WHERE M.`seen_flag` = 0"
+        )->queryScalar(
+                array(
+                    ':username' => $_POST['userName'],
+                )
+            );
+
+        $this->sendAnswer(array('status' => 'ok', 'unreadCount' => $unreadCount));
+    }
+
     public function actionAddGetMailRule()
     {
         $this->checkRequiredFields(array('userName', 'host', 'email', 'password'));

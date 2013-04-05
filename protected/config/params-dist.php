@@ -10,7 +10,8 @@ return array(
     'dbmail-sievecmd' => '/usr/sbin/dbmail-sievecmd',
 
     'mailDomain' => '66.ru',
-//    'dbMailHost' => '',
-//    'dbMailUser' => '',
-//    'dbMailPassword' => '',
+
+    'dbMailHost' => '',
+    'dbMailUser' => '',
+    'dbMailPassword' => '',
 );

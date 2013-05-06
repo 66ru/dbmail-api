@@ -109,12 +109,21 @@ class SiteController extends Controller
             $_POST['password'],
             $_POST['userName']
         );
+        $mailBoxType = GetmailHelper::determineMailboxType(
+            $_POST['host'],
+            $_POST['email'],
+            $_POST['password']
+        );
+        if ($mailBoxType === false) {
+            $this->sendAnswer(array('status' => 'error', 'error' => 'can\'t connect to server'));
+        }
         $config = GetmailHelper::getConfig(
             $_POST['host'],
             $_POST['email'],
             $_POST['password'],
             $_POST['userName'],
-            $_POST['delete']
+            $_POST['delete'],
+            $mailBoxType == GetmailHelper::POP3_SSL
         );
         if (!$config) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));

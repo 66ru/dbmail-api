@@ -9,15 +9,19 @@ class GetmailHelper
     const ERROR_WRONG_DOMAIN = 4;
     const ERROR_UNKNOWN = 5;
 
+    const POP3_DEFAULT = 'default';
+    const POP3_SSL = 'ssl';
+
     /**
      * @param string $host
      * @param string $email
      * @param string $password
      * @param string $dbMailUserName
      * @param bool $delete
+     * @param bool $useSsl
      * @return bool|string false if error
      */
-    public static function getConfig($host, $email, $password, $dbMailUserName, $delete)
+    public static function getConfig($host, $email, $password, $dbMailUserName, $delete, $useSsl)
     {
         if (strpos($dbMailUserName, '"') !== false ||
             strpos($dbMailUserName, '/') !== false
@@ -29,9 +33,10 @@ class GetmailHelper
         $logPath = self::getLogFileName($ruleName);
         $dbmailDeliver = Yii::app()->params['dbmail-deliver'];
         $delete = $delete ? 1 : 0;
+        $useSsl = $useSsl ? 'SSL' : '';
 
         $template = "[retriever]
-type = SimplePOP3Retriever
+type = SimplePOP3{$useSsl}Retriever
 server = $host
 username = $email
 password = $password
@@ -133,5 +138,33 @@ delete = $delete";
         }
 
         return self::ERROR_UNKNOWN;
+    }
+
+    /**
+     * determine 110 or 995 port use to connecting
+     * @param $host
+     * @param $email
+     * @param $password
+     * @return bool|string GetmailHelper::POP3_* or false if failed
+     */
+    public static function determineMailboxType($host, $email, $password)
+    {
+        imap_timeout(IMAP_OPENTIMEOUT, 5);
+        imap_timeout(IMAP_READTIMEOUT, 5);
+        imap_timeout(IMAP_WRITETIMEOUT, 5);
+        imap_timeout(IMAP_CLOSETIMEOUT, 1);
+
+        $imapStream = imap_open('{' . $host . ':110/pop3/novalidate-cert}INBOX', $email, $password);
+        if ($imapStream) {
+            imap_close($imapStream);
+            return self::POP3_DEFAULT;
+        }
+        $imapStream = imap_open('{' . $host . ':995/pop3/ssl/novalidate-cert}INBOX', $email, $password);
+        if ($imapStream) {
+            imap_close($imapStream);
+            return self::POP3_SSL;
+        }
+
+        return false;
     }
 }

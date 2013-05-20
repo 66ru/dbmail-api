@@ -154,17 +154,22 @@ delete = $delete";
         imap_timeout(IMAP_WRITETIMEOUT, 5);
         imap_timeout(IMAP_CLOSETIMEOUT, 1);
 
+        $oldErrorReporting = error_reporting();
+        error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
         $imapStream = imap_open('{' . $host . ':110/pop3/novalidate-cert}INBOX', $email, $password);
         if ($imapStream) {
             imap_close($imapStream);
+            error_reporting($oldErrorReporting);
             return self::POP3_DEFAULT;
         }
         $imapStream = imap_open('{' . $host . ':995/pop3/ssl/novalidate-cert}INBOX', $email, $password);
         if ($imapStream) {
             imap_close($imapStream);
+            error_reporting($oldErrorReporting);
             return self::POP3_SSL;
         }
 
+        error_reporting($oldErrorReporting);
         return false;
     }
 }

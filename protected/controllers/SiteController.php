@@ -103,12 +103,6 @@ class SiteController extends Controller
         if (!isset($_POST['delete']))
             $_POST['delete'] = false;
 
-        $ruleName = GetmailHelper::getRuleName(
-            $_POST['host'],
-            $_POST['email'],
-            $_POST['password'],
-            $_POST['userName']
-        );
         $mailBoxType = GetmailHelper::determineMailboxType(
             $_POST['host'],
             $_POST['email'],
@@ -117,22 +111,22 @@ class SiteController extends Controller
         if ($mailBoxType === false) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'can\'t connect to server'));
         }
-        $config = GetmailHelper::getConfig(
-            $_POST['host'],
-            $_POST['email'],
-            $_POST['password'],
-            $_POST['userName'],
-            $_POST['delete'],
-            $mailBoxType == GetmailHelper::POP3_SSL
-        );
-        if (!$config) {
-            $this->sendAnswer(array('status' => 'error', 'error' => 'error while creating getmail config'));
+        $rule = new GetMailRule();
+        $rule->host = $_POST['host'];
+        $rule->email = $_POST['email'];
+        $rule->password = $_POST['password'];
+        $rule->dbMailUserName = $_POST['userName'];
+        $rule->delete = $_POST['delete'];
+        $rule->ssl = $mailBoxType == GetmailHelper::POP3_SSL;
+        if (!$rule->save()) {
+            $this->sendAnswer(array('status' => 'error', 'error' => 'error while saving rule'));
         }
-        $ruleFileName = GetmailHelper::getFileName($ruleName);
+
+        $ruleFileName = $rule->getRuleFileName();
         $ruleDir = pathinfo($ruleFileName, PATHINFO_DIRNAME);
         if (!file_exists($ruleDir))
             mkdir($ruleDir, 0777, true);
-        $ret = file_put_contents($ruleFileName, $config);
+        $ret = file_put_contents($ruleFileName, $rule->getConfig());
         if (!$ret) {
             $this->sendAnswer(array('status' => 'error', 'error' => 'error while writing getmail config'));
         }
@@ -140,7 +134,7 @@ class SiteController extends Controller
         $this->sendAnswer(
             array(
                 'status' => 'ok',
-                'ruleName' => $ruleName
+                'ruleName' => $rule->id
             )
         );
     }
@@ -149,14 +143,11 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('ruleName'));
 
-        $filename = GetmailHelper::getFileName($_POST['ruleName']);
-        $logFilename = GetmailHelper::getLogFileName($_POST['ruleName']);
-        if (file_exists($filename)) {
-            if (!unlink($filename)) {
+        $rule = GetMailRule::model()->findByPk($_POST['ruleName']);
+        /** @var GetMailRule $rule */
+        if (!empty($rule)) {
+            if (!$rule->delete()) {
                 $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
-            }
-            if (file_exists($logFilename)) {
-                unlink($logFilename);
             }
         } else {
             $this->sendAnswer(array('status' => 'error', 'error' => 'rule not found'));
@@ -169,16 +160,11 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('userName'));
 
-        $startDir = GetmailHelper::getConfigsDir() . GetmailHelper::getIntermediatePath($_POST['userName'].'-null');
-
-        $rules = array();
-        $files = glob($startDir.$_POST['userName'].'-*');
-        array_filter($files, function($value) use (&$rules, $startDir) {
-            if (strpos($value, '.log') === false) {
-                $ruleName = substr($value, strlen($startDir));
-                $rules[$ruleName] = GetmailHelper::getRuleStatus($ruleName);
-            }
-        });
+        $rules = GetMailRule::model()->findByAttributes(array('dbMailUserName' => $_POST['userName']));
+        /** @var GetMailRule[] $rules */
+        foreach ($rules as $rule) {
+            $rules[$rule->id] = $rule->status;
+        }
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $rules));
     }
@@ -191,54 +177,6 @@ class SiteController extends Controller
             }
         }
     }
-
-//    public function actionGetFolders()
-//    {
-//        if (empty($_POST['userName']))
-//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
-//
-//        $user = $this->getUserModel();
-//        $this->sendAnswer(array('status' => 'ok', 'rules' => array_keys(CHtml::listData($user->mailboxes, 'name', 'name'))));
-//    }
-//
-//    public function actionCreateFolder()
-//    {
-//        if (empty($_POST['userName']) || empty($_POST['folderName']))
-//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
-//
-//        $user = $this->getUserModel();
-//        $mailbox = new Mailbox();
-//        $mailbox->name = $_POST['folderName'];
-//        $mailbox->owner_idnr = $user->user_idnr;
-//        if (!$mailbox->save())
-//            $this->sendAnswer(array('status' => 'error', 'error' => print_r($mailbox->getErrors(), true)));
-//
-//        $this->sendAnswer(array('status' => 'ok'));
-//    }
-//
-//    public function actionDeleteFolder()
-//    {
-//        if (empty($_POST['userName']) || empty($_POST['folderName']))
-//            $this->sendAnswer(array('status' => 'error', 'error' => 'wrong input'));
-//
-//        $user = $this->getUserModel();
-//        if (!Mailbox::model()->deleteAllByAttributes(array('name' => $_POST['folderName'], 'owner_idnr' => $user->user_idnr)))
-//            $this->sendAnswer(array('status' => 'error', 'error' => 'mailbox not found'));
-//
-//        $this->sendAnswer(array('status' => 'ok'));
-//    }
-//
-//    /**
-//     * @return User
-//     */
-//    protected function getUserModel()
-//    {
-//        $user = User::model()->findByName($_POST['userName']);
-//        if (empty($user))
-//            $this->sendAnswer(array('status' => 'error', 'error' => 'user not found'));
-//
-//        return $user;
-//    }
 
     public function actionError()
     {

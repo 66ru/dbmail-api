@@ -31,16 +31,22 @@ return array(
     // application components
     'components' => array(
         'db' => array(
-            'connectionString' => 'sqlite:' . dirname(__FILE__) . '/../data/testdrive.db',
+            'class' => 'CDbConnection',
+            'connectionString' => "mysql:host={$params['dbMailHost']};dbname=dbmail",
+            'emulatePrepare' => true,
+            'username' => $params['dbMailUser'],
+            'password' => $params['dbMailPassword'],
+            'charset' => 'utf8',
+            'tablePrefix' => 'dbmail_',
         ),
-//        'db' => array(
-//            'class' => 'CDbConnection',
-//            'connectionString' => 'mysql:host=127.0.0.1;dbname=ekabu',
-//            'emulatePrepare' => true,
-//            'username' => 'root',
-//            'password' => '123',
-//            'charset' => 'utf8',
-//        ),
+        'getmaildb' => array(
+            'class' => 'CDbConnection',
+            'connectionString' => "mysql:host={$params['dbMailHost']};dbname=getmail",
+            'emulatePrepare' => true,
+            'username' => $params['dbMailUser'],
+            'password' => $params['dbMailPassword'],
+            'charset' => 'utf8',
+        ),
         'dbmail' => array(
             'class' => 'application.components.DBMailClient'
         ),

@@ -10,6 +10,16 @@
  */
 class User extends CActiveRecord
 {
+    public function init()
+    {
+        parent::init();
+
+        $this->onBeforeSave = function ($event) {
+            /** @var CModelEvent $event */
+            $event->isValid = !$this->isNewRecord;
+        };
+    }
+
     /**
      * @param string $className
      * @return User
@@ -38,13 +48,5 @@ class User extends CActiveRecord
     public function findByName($userName)
     {
         return $this->findByAttributes(array('userid' => $userName));
-    }
-
-    protected function beforeSave()
-    {
-        if ($this->isNewRecord)
-            return false;
-        else
-            return parent::beforeSave();
     }
 }

@@ -46,6 +46,14 @@ return array(
             'charset' => 'utf8',
             'tablePrefix' => 'dbmail_',
         ),
+        'getmaildb' => array(
+            'class' => 'CDbConnection',
+            'connectionString' => "mysql:host={$params['dbMailHost']};dbname=getmail",
+            'emulatePrepare' => true,
+            'username' => $params['dbMailUser'],
+            'password' => $params['dbMailPassword'],
+            'charset' => 'utf8',
+        ),
         'errorHandler' => array(
             'errorAction' => 'site/error',
         ),

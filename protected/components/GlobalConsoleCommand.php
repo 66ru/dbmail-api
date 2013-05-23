@@ -85,7 +85,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     public function releaseExpiredTasks()
     {
         $expiredTasks = CronLock::model()->findAll(
-            "lastActivity < UNIX_TIMESTAMP() - :changeOwnerTimeout",
+            "lastActivity <= UNIX_TIMESTAMP() - :changeOwnerTimeout",
             array(
                 ':changeOwnerTimeout' => $this->changeOwnerTimeout,
             )
@@ -96,7 +96,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
                 if (!$task->delete())
                     throw new Exception('can\'t delete task: '.print_r($task->attributes, true));
                 Yii::log(
-                    "task {$task->id}({$task->hostname} lock, last activity at {$task->lastActivity}) was released",
+                    "task {$task->id}({$task->hostname}, last activity at {$task->lastActivity}) lock was released",
                     CLogger::LEVEL_WARNING,
                     'cron'
                 );

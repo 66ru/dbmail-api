@@ -33,7 +33,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     /**
      * @param int[] $busyIds
-     * @return int[] returns non-processing task ids
+     * @return int[] returns task ids available to processing
      */
     public function getAvailableIds($busyIds)
     {

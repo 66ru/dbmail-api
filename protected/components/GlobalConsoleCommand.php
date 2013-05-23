@@ -63,7 +63,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $myTasks = CronLock::model()->findAllByAttributes(array('hostname' => gethostname()));
         /** @var CronLock[] $myTasks */
         foreach ($myTasks as $task) {
-            $processStartedTime = filectime('/proc/' . $task->pid);
+            $processStartedTime = @filectime('/proc/' . $task->pid);
             if (!$processStartedTime) {
                 list($null, $ruleId) = explode('-', $task->id);
                 $this->postProcessing($ruleId);

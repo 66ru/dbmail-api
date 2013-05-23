@@ -12,7 +12,7 @@ $logRoutes[] = array(
 $logRoutes[] = array(
     'class'=>'lib.sentry.RSentryLog',
     'levels'=>'error, warning',
-    'except' => 'exception.*, php',
+    'except' => 'exception.*, php, system.db.CDbCommand',
     'dsn' => $params['sentryDSN'],
 );
 

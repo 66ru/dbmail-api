@@ -1,140 +1,62 @@
 <?php
 
-class GrabMailCommand extends CConsoleCommand
+class GrabMailCommand extends GlobalConsoleCommand
 {
-    public $threadsCount = 2;
+    public $aggregateTasks = 30;
 
-    public function actionIndex()
+    /**
+     * @return string
+     */
+    public function getJobPrefix()
     {
-        $isGetMailRunning = $this->isGetMailRunning();
-        if (!$isGetMailRunning) {
-            $configs = $this->getConfigs();
-            $lineLimit = $this->getCmdLineLimit();
-
-            $configsPerProcess = ceil(count($configs) / $this->threadsCount);
-            $i = 0;
-            $cmd = Yii::app()->params['getmail'];
-            foreach ($configs as &$config) {
-                $cmd .= ' --rcfile ' . $config;
-                $i++;
-
-                if ($i == $configsPerProcess || strlen($cmd) >= $lineLimit) {
-                    $this->startGetMail($cmd);
-                    $i = 0;
-                    $cmd = Yii::app()->params['getmail'];
-                }
-            }
-        } else {
-            if (time() - $isGetMailRunning > 3600) {
-                throw new CException('getmail process executing for 1 day');
-            }
-        }
+        return 'getmail';
     }
 
     /**
-     * @param string $cmd
-     * @throws CException
+     * @param int[] $busyIds
+     * @return int[]
      */
-    public function startGetMail($cmd)
+    public function getAvailableIds($busyIds)
     {
-        $pid = exec($cmd . ' >/dev/null 2>&1 & echo $!;');
+        return array_keys( EHtml::listData( GetMailRule::model()->dbCriteria->addNotInCondition('id', $busyIds) ) );
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int pid of started process
+     */
+    protected function startProcess($ids)
+    {
+        $rules = GetMailRule::model();
+        $rules->dbCriteria->addInCondition('id', $ids);
+        $rules->findAll();
+
+        /** @var GetMailRule[] $rules */
+        $cmd = Yii::app()->params['getmail'];
+        foreach ($rules as $rule) {
+            $ruleFileName = $rule->getRuleFileName();
+            file_put_contents($ruleFileName, $rule->getConfig());
+            $cmd .= ' --rcfile ' . $ruleFileName;
+        }
+
+        $pid = exec($cmd . ' >/dev/null 2>&1 & echo $!');
         if (!$pid) {
             throw new CException('can\'t get pid of executed getmail process');
         }
 
-        if (!file_put_contents("/tmp/gm-$pid.pid", $pid)) {
-            throw new CException("can't write pid of executed getmail in file /tmp/gm-$pid.pid");
-        }
+        return $pid;
     }
 
     /**
-     * returns false or unix timestamp of latest exec time
-     * @return bool|int
-     * @throws CException
+     * @param int $id
      */
-    public function isGetMailRunning()
+    public function postProcessing($id)
     {
-        $res = glob("/tmp/gm-*.pid");
-        if ($res === false || !is_array($res)) {
-            throw new CException('can\'t get pid of executed getmail process');
-        }
+        /** @var GetMailRule $rule */
+        $rule = GetMailRule::model()->findByPk($id);
 
-        if (is_array($res) && !empty($res)) {
-            $latestStartDate = time();
-            $savedTime = $latestStartDate;
-            foreach ($res as $file) {
-                $pid = file_get_contents($file);
-                if (!file_exists("/proc/$pid")) {
-                    unlink($file);
-                    continue;
-                }
-
-                $time = filemtime($file);
-                if ($time < $latestStartDate) {
-                    $latestStartDate = $time;
-                }
-            }
-
-            if ($latestStartDate == $savedTime)
-                return false;
-            else
-                return $latestStartDate;
-        } else {
-            return false;
-        }
+        $rule->status = $rule->getRuleStatus();
+        $rule->save();
     }
 
-    /**
-     * @param null|string $startDir defaults to configs directory
-     * @return string[] array with config file names
-     * @throws CException
-     */
-    protected function getConfigs($startDir = null)
-    {
-        if (!$startDir) {
-            $startDir = GetmailHelper::getConfigsDir();
-        }
-
-        if (false === $d = opendir($startDir)) {
-            throw new CException('can\'t open directory for reading: ' . $startDir);
-        }
-
-        $result = array();
-        while ($entry = readdir($d)) {
-            if (substr($entry, 0, 1) == '.' ||
-                substr($entry, -4) == '.log'
-            ) {
-                continue;
-            }
-            $entry = $startDir . $entry;
-            if (is_dir($entry)) {
-                $result += $this->getConfigs($entry . '/');
-            } else {
-                $result[] = $entry;
-            }
-        }
-        closedir($d);
-
-        return $result;
-    }
-
-    /**
-     * returns maximum command line length in bytes
-     * @return int
-     * @throws CException
-     */
-    protected function getCmdLineLimit()
-    {
-        ob_start();
-        passthru('xargs --show-limits --no-run-if-empty </dev/null 2>&1', $returnVal);
-        $output = ob_get_clean();
-
-        if ($returnVal ||
-            !preg_match('/Maximum length of command we could actually use: (\d+)/', $output, $matches)
-        ) {
-            throw new CException("xargs returned code $returnVal with message: $output");
-        }
-
-        return $matches[1];
-    }
 }

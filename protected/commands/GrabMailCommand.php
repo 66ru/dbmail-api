@@ -7,7 +7,7 @@ class GrabMailCommand extends GlobalConsoleCommand
     /**
      * @return string
      */
-    public function getJobPrefix()
+    public function getTaskPrefix()
     {
         return 'getmail';
     }

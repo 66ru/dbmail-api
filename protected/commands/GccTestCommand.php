@@ -3,13 +3,13 @@
 class GccTestCommand extends GlobalConsoleCommand
 {
     public $aggregateTasks = 2;
-    public $processFreezedAlarmTimeout = 120;
+    public $longRunningTimeout = 120;
     public $changeOwnerTimeout = 120;
 
     /**
      * @return string
      */
-    public function getJobPrefix()
+    public function getTaskPrefix()
     {
         return 'gcctest';
     }

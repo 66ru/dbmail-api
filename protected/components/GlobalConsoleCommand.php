@@ -8,26 +8,32 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     public $aggregateTasks = 1;
 
     /**
-     * @var int seconds
+     * If process executes more than $longRunningTimeout seconds,
+     * it will be considered as long-running
+     * and warning message will be logged
+     * @var int
      */
-    public $processFreezedAlarmTimeout = 3600;
+    public $longRunningTimeout = 3600; // 1h
 
     /**
+     * If any running task $lastActivity value older than $changeOwnerTimeout,
+     * this lock will be released, so
+     * this task will be acquired by any of active nodes.
      * @var int seconds
      */
-    public $changeOwnerTimeout = 600;
+    public $changeOwnerTimeout = 600; // 10m
 
     /**
      * @return string
      */
-    public function getJobPrefix()
+    public function getTaskPrefix()
     {
         return 'prefix';
     }
 
     /**
      * @param int[] $busyIds
-     * @return int[]
+     * @return int[] returns non-processing task ids
      */
     public function getAvailableIds($busyIds)
     {
@@ -35,6 +41,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     }
 
     /**
+     * begin processing bunch of task ids
      * @param int[] $ids
      * @return int pid of started process
      */
@@ -44,6 +51,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     }
 
     /**
+     *
      * @param int $id
      */
     public function postProcessing($id)
@@ -52,41 +60,41 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     public function actionIndex()
     {
-        $myJobs = CronLock::model()->findAllByAttributes(array('hostname' => gethostname()));
-        /** @var CronLock[] $myJobs */
-        foreach ($myJobs as $job) {
-            $processStartedTime = filectime('/proc/' . $job->pid);
+        $myTasks = CronLock::model()->findAllByAttributes(array('hostname' => gethostname()));
+        /** @var CronLock[] $myTasks */
+        foreach ($myTasks as $task) {
+            $processStartedTime = filectime('/proc/' . $task->pid);
             if (!$processStartedTime) {
-                list($null, $ruleId) = explode('-', $job->id);
+                list($null, $ruleId) = explode('-', $task->id);
                 $this->postProcessing($ruleId);
-                $job->delete();
+                $task->delete();
                 continue;
-            } elseif ($processStartedTime + $this->processFreezedAlarmTimeout < time()) {
-                Yii::log("job $job->id freezed", CLogger::LEVEL_WARNING, 'cron');
+            } elseif ($processStartedTime + $this->longRunningTimeout < time()) {
+                Yii::log("task $task->id freezed", CLogger::LEVEL_WARNING, 'cron');
             }
-            $job->lastActivity = time();
-            $job->save();
+            $task->lastActivity = time();
+            $task->save();
         }
 
-        $this->releaseExpiredJobs();
+        $this->releaseExpiredTasks();
 
         $this->beginWork();
     }
 
-    public function releaseExpiredJobs()
+    public function releaseExpiredTasks()
     {
-        $expiredJobs = CronLock::model()->findAll(
+        $expiredTasks = CronLock::model()->findAll(
             "lastActivity < UNIX_TIMESTAMP() - :changeOwnerTimeout",
             array(
                 ':changeOwnerTimeout' => $this->changeOwnerTimeout,
             )
         );
-        /** @var CronLock[] $expiredJobs */
-        foreach ($expiredJobs as $job) {
+        /** @var CronLock[] $expiredTasks */
+        foreach ($expiredTasks as $task) {
             try {
-                $job->delete();
+                $task->delete();
                 Yii::log(
-                    "lock on job {$job->id}({$job->hostname}, last activity at {$job->lastActivity}) was released",
+                    "task {$task->id}({$task->hostname} lock, last activity at {$task->lastActivity}) was released",
                     CLogger::LEVEL_WARNING,
                     'cron'
                 );
@@ -97,54 +105,54 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     protected function beginWork()
     {
-        $queuedJobIds = array();
+        $queuedTaskIds = array();
         $busyIds = EHtml::listData(CronLock::model());
-        foreach ($this->getAvailableJobIds($busyIds) as $jobId) {
+        foreach ($this->getAvailableTaskIds($busyIds) as $taskId) {
             $lock = new CronLock();
             $lock->hostname = gethostname();
-            $lock->id = $jobId;
+            $lock->id = $taskId;
             try {
                 $lock->save();
-                $queuedJobIds[] = $jobId;
+                $queuedTaskIds[] = $taskId;
             } catch (CDbException $e) {
                 Yii::log("failed lock $lock->id id", CLogger::LEVEL_INFO, 'cron');
                 continue;
             }
-            if (count($queuedJobIds) == $this->aggregateTasks) {
-                $this->startJobs($queuedJobIds);
-                $queuedJobIds = array();
+            if (count($queuedTaskIds) == $this->aggregateTasks) {
+                $this->startTasks($queuedTaskIds);
+                $queuedTaskIds = array();
             }
         }
 
-        if (!empty($queuedJobIds))
-            $this->startJobs($queuedJobIds);
+        if (!empty($queuedTaskIds))
+            $this->startTasks($queuedTaskIds);
     }
 
     /**
-     * @param string[] $busyJobIds
+     * @param string[] $busyTaskIds
      * @return string[]
      */
-    protected function getAvailableJobIds($busyJobIds)
+    protected function getAvailableTaskIds($busyTaskIds)
     {
-        $busyIds = $this->jobIdsToIds($busyJobIds);
+        $busyIds = $this->TaskIdsToIds($busyTaskIds);
 
         $availableIds = $this->getAvailableIds($busyIds);
 
-        $availableJobIds = $this->idsToJobIds($availableIds);
+        $availableTaskIds = $this->idsToTaskIds($availableIds);
 
-        return $availableJobIds;
+        return $availableTaskIds;
     }
 
     /**
-     * @param string[] $jobIds
+     * @param string[] $taskIds
      * @throws CException
      */
-    protected function startJobs($jobIds)
+    protected function startTasks($taskIds)
     {
-        $pid = $this->startProcess( $this->jobIdsToIds($jobIds) );
+        $pid = $this->startProcess( $this->TaskIdsToIds($taskIds) );
 
         $c = new CDbCriteria();
-        $c->addInCondition('id', $jobIds);
+        $c->addInCondition('id', $taskIds);
         CronLock::model()->updateAll(
             array(
                 'pid' => $pid,
@@ -155,14 +163,14 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     }
 
     /**
-     * @param string[] $jobIds
+     * @param string[] $taskIds
      * @return int[]
      */
-    protected function jobIdsToIds($jobIds)
+    protected function TaskIdsToIds($taskIds)
     {
         $ids = array();
-        foreach ($jobIds as $jobId) {
-            list($null, $ruleId) = explode('-', $jobId);
+        foreach ($taskIds as $taskId) {
+            list($null, $ruleId) = explode('-', $taskId);
             $ids[] = $ruleId;
         }
         return $ids;
@@ -172,12 +180,12 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
      * @param $ids
      * @return array
      */
-    protected function idsToJobIds($ids)
+    protected function idsToTaskIds($ids)
     {
-        $jobIds = array();
+        $taskIds = array();
         foreach ($ids as $ruleId) {
-            $jobIds[] = $this->getJobPrefix() . '-' . $ruleId;
+            $taskIds[] = $this->getTaskPrefix() . '-' . $ruleId;
         }
-        return $jobIds;
+        return $taskIds;
     }
 }

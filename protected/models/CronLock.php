@@ -3,9 +3,9 @@
 /**
  * Class CronLock
  *
- * @property string $id
- * @property string $hostname
- * @property int $lastActivity
+ * @property string $id unique task id
+ * @property string $hostname task owner node's hostname
+ * @property int $lastActivity timestamp of last detected process activity
  * @property int $pid
  */
 class CronLock extends CActiveRecord

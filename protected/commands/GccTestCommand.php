@@ -3,8 +3,8 @@
 class GccTestCommand extends GlobalConsoleCommand
 {
     public $aggregateTasks = 2;
-    public $longRunningTimeout = 120;
-    public $changeOwnerTimeout = 120;
+    public $longRunningTimeout = 660; // 11m
+    public $changeOwnerTimeout = 120; // 2m
 
     /**
      * @return string

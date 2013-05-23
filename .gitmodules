@@ -1,3 +1,6 @@
 [submodule "lib/yii"]
 	path = lib/yii
 	url = git://github.com/yiisoft/yii.git
+[submodule "lib/sentry"]
+	path = lib/sentry
+	url = git://github.com/m8rge/yii-sentry-log.git

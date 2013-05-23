@@ -2,7 +2,7 @@
 
 return array(
     'debug' => false,
-    'errorEmails' => array(),
+    'sentryDSN' => '',
 
     'getmail' => '/usr/bin/getmail',
     'dbmail-deliver' => '/usr/sbin/dbmail-deliver',

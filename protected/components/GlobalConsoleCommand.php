@@ -73,7 +73,8 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
                 Yii::log("task $task->id freezed", CLogger::LEVEL_WARNING, 'cron');
             }
             $task->lastActivity = time();
-            $task->save();
+            if (!$task->save())
+                throw new Exception('can\'t save task: '.print_r($task->errors, true));
         }
 
         $this->releaseExpiredTasks();
@@ -92,7 +93,8 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         /** @var CronLock[] $expiredTasks */
         foreach ($expiredTasks as $task) {
             try {
-                $task->delete();
+                if (!$task->delete())
+                    throw new Exception('can\'t delete task: '.print_r($task->attributes, true));
                 Yii::log(
                     "task {$task->id}({$task->hostname} lock, last activity at {$task->lastActivity}) was released",
                     CLogger::LEVEL_WARNING,
@@ -108,14 +110,15 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $queuedTaskIds = array();
         $busyIds = EHtml::listData(CronLock::model());
         foreach ($this->getAvailableTaskIds($busyIds) as $taskId) {
-            $lock = new CronLock();
-            $lock->hostname = gethostname();
-            $lock->id = $taskId;
+            $task = new CronLock();
+            $task->hostname = gethostname();
+            $task->id = $taskId;
             try {
-                $lock->save();
+                if (!$task->save())
+                    throw new Exception('can\'t save task: '.print_r($task->errors, true));
                 $queuedTaskIds[] = $taskId;
             } catch (CDbException $e) {
-                Yii::log("failed lock $lock->id id", CLogger::LEVEL_INFO, 'cron');
+                Yii::log("failed lock $task->id id", CLogger::LEVEL_INFO, 'cron');
                 continue;
             }
             if (count($queuedTaskIds) == $this->aggregateTasks) {

@@ -1,5 +1,7 @@
 <?php
 
+Yii::setPathOfAlias('lib', realpath(__DIR__ . '/../../lib'));
+
 $params = require(__DIR__ . '/params.php');
 
 $logRoutes = array();
@@ -7,17 +9,18 @@ $logRoutes[] = array(
     'class' => 'CFileLogRoute',
     'levels' => 'error,warning',
 );
-if (!$params['debug'])
-    $logRoutes[] = array(
-        'class' => 'CEmailLogRoute',
-        'levels' => 'error, warning',
-        'emails' => $params['errorEmails'],
-        'utf8' => true,
-    );
+$logRoutes[] = array(
+    'class'=>'lib.sentry-log.RSentryLog',
+    'levels'=>'error, warning',
+    'except' => 'exception.*, php',
+    'dsn' => $params['sentryDSN'],
+);
 
 return array(
     'basePath' => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
     'name' => 'DBMail client',
+
+    'preload' => array('log', 'RSentryException'),
 
     'import' => array(
         'application.helpers.*',
@@ -25,11 +28,11 @@ return array(
         'application.components.*',
     ),
 
-    // preloading 'log' component
-    'preload' => array('log'),
-
-    // application components
     'components' => array(
+        'RSentryException' => array(
+            'dsn' => $params['sentryDSN'],
+            'class' => 'ESentryComponent',
+        ),
         'db' => array(
             'class' => 'CDbConnection',
             'connectionString' => "mysql:host={$params['dbMailHost']};dbname=dbmail",

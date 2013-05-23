@@ -20,7 +20,7 @@ class GccTestCommand extends GlobalConsoleCommand
      */
     public function getAvailableIds($busyIds)
     {
-        $allIds = [0,1,2,3,4,5,6,7,8,9];
+        $allIds = array(0,1,2,3,4,5,6,7,8,9);
         return array_diff($allIds, $busyIds);
     }
 

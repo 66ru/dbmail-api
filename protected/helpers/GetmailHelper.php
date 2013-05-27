@@ -20,7 +20,7 @@ class GetmailHelper
         imap_timeout(IMAP_CLOSETIMEOUT, 1);
 
         $oldErrorReporting = error_reporting();
-        error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+        error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_ERROR);
         $imapStream = imap_open('{' . $host . ':110/pop3/novalidate-cert}INBOX', $email, $password);
         if ($imapStream) {
             imap_close($imapStream);

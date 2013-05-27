@@ -108,9 +108,6 @@ class SiteController extends Controller
             $_POST['email'],
             $_POST['password']
         );
-        if ($mailBoxType === false) {
-            $this->sendAnswer(array('status' => 'error', 'error' => 'can\'t connect to server'));
-        }
         $rule = new GetMailRule();
         $rule->host = $_POST['host'];
         $rule->email = $_POST['email'];
@@ -119,16 +116,7 @@ class SiteController extends Controller
         $rule->delete = $_POST['delete'];
         $rule->ssl = $mailBoxType == GetmailHelper::POP3_SSL;
         if (!$rule->save()) {
-            $this->sendAnswer(array('status' => 'error', 'error' => 'error while saving rule'));
-        }
-
-        $ruleFileName = $rule->getRuleFileName();
-        $ruleDir = pathinfo($ruleFileName, PATHINFO_DIRNAME);
-        if (!file_exists($ruleDir))
-            mkdir($ruleDir, 0777, true);
-        $ret = file_put_contents($ruleFileName, $rule->getConfig());
-        if (!$ret) {
-            $this->sendAnswer(array('status' => 'error', 'error' => 'error while writing getmail config'));
+            throw new CException('error while saving rule');
         }
 
         $this->sendAnswer(

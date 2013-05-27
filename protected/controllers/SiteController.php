@@ -149,7 +149,7 @@ class SiteController extends Controller
         $this->checkRequiredFields(array('userName'));
 
         $answer = array();
-        $rules = GetMailRule::model()->findByAttributes(array('dbMailUserName' => $_POST['userName']));
+        $rules = GetMailRule::model()->findAllByAttributes(array('dbMailUserName' => $_POST['userName']));
         /** @var GetMailRule[] $rules */
         foreach ($rules as $rule) {
             $answer[] = $rule->attributes;

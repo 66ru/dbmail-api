@@ -86,12 +86,10 @@ class SieveCreator
     protected static function getConditions($rules, &$require)
     {
         $conditions = array();
-        foreach ($rules as $attributeArray) {
-            foreach ($attributeArray as $attribute => $rule) {
-                $condition = self::getCondition($attribute, $rule, $require);
-                if ($condition)
-                    $conditions[] = $condition;
-            }
+        foreach ($rules as $attribute => $rule) {
+            $condition = self::getCondition($attribute, $rule, $require);
+            if ($condition)
+                $conditions[] = $condition;
         }
 
         return $conditions;

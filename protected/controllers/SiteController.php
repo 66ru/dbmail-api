@@ -122,16 +122,16 @@ class SiteController extends Controller
         $this->sendAnswer(
             array(
                 'status' => 'ok',
-                'ruleName' => $rule->id
+                'ruleId' => $rule->id
             )
         );
     }
 
     public function actionRemoveGetMailRule()
     {
-        $this->checkRequiredFields(array('ruleName'));
+        $this->checkRequiredFields(array('ruleId'));
 
-        $rule = GetMailRule::model()->findByPk($_POST['ruleName']);
+        $rule = GetMailRule::model()->findByPk($_POST['ruleId']);
         /** @var GetMailRule $rule */
         if (!empty($rule)) {
             if (!$rule->delete()) {
@@ -151,7 +151,7 @@ class SiteController extends Controller
         $rules = GetMailRule::model()->findByAttributes(array('dbMailUserName' => $_POST['userName']));
         /** @var GetMailRule[] $rules */
         foreach ($rules as $rule) {
-            $rules[$rule->id] = $rule->status;
+            $rules[] = $rule->attributes;
         }
 
         $this->sendAnswer(array('status' => 'ok', 'rules' => $rules));

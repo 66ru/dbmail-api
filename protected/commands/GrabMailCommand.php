@@ -3,6 +3,8 @@
 class GrabMailCommand extends GlobalConsoleCommand
 {
     public $aggregateTasks = 30;
+    public $longRunningTimeout = 7200; // 2h
+    public $changeOwnerTimeout = 300; // 5m
 
     /**
      * @return string

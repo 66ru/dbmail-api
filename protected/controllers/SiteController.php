@@ -135,10 +135,10 @@ class SiteController extends Controller
         /** @var GetMailRule $rule */
         if (!empty($rule)) {
             if (!$rule->delete()) {
-                $this->sendAnswer(array('status' => 'error', 'error' => 'error while removing rule'));
+                throw new CException('error while removing rule');
             }
         } else {
-            $this->sendAnswer(array('status' => 'error', 'error' => 'rule not found'));
+            throw new CException('rule not found');
         }
 
         $this->sendAnswer(array('status' => 'ok'));

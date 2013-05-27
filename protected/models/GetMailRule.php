@@ -46,7 +46,8 @@ class GetMailRule extends CActiveRecord
     {
         return array(
             array('host, email, password, dbMailUserName', 'length', 'max' => 255, 'allowEmpty' => false),
-            array('delete, ssl', 'numerical', 'integerOnly' => true, 'min' => 0),
+            array('delete', 'numerical', 'integerOnly' => true, 'min' => 0),
+            array('ssl', 'boolean'),
             array('status', 'numerical', 'integerOnly' => true),
         );
     }

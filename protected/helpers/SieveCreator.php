@@ -103,7 +103,7 @@ class SieveCreator
      */
     protected static function getCondition($attribute, $rule, &$require)
     {
-        if (in_array($attribute, array('From', 'Subject', 'Any To or Cc'))) {
+        if (in_array($attribute, array('From', 'Subject', 'Any To or Cc', 'X-Spam-Flag'))) {
             if (empty($rule['value']) || empty($rule['operation']) ||
                     !is_string($rule['value']) || !is_string($rule['operation']))
                 return '';

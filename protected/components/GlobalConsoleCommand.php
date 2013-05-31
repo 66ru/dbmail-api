@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Class GlobalConsoleCommand
+ *
+ * version 1.0
+ */
 abstract class GlobalConsoleCommand extends CConsoleCommand
 {
     /**

@@ -14,4 +14,8 @@ return array(
     'dbMailHost' => '',
     'dbMailUser' => '',
     'dbMailPassword' => '',
+
+    'getMailHost' => '',
+    'getMailUser' => '',
+    'getMailPassword' => '',
 );

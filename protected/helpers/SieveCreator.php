@@ -164,9 +164,9 @@ class SieveCreator
             }
 
             return $condition;
+        } else {
+            throw new CException("unknown attribute $attribute");
         }
-
-        return '';
     }
 
     /**

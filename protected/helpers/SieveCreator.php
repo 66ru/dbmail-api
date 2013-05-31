@@ -52,12 +52,12 @@ class SieveCreator
                 $actionsArr[] = 'discard';
             } else if ($action == 'Mirror to') {
                 if (!is_string($attribute) || !preg_match('#^.+?@.+?\..+?$#', $attribute))
-                    continue;
+                    throw new CException("wrong email $attribute");
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "redirect \"$attribute\"";
             } else if ($action == 'Mark') {
                 if (!is_string($attribute) || !in_array($attribute, array('Flagged', 'Read')))
-                    continue;
+                    throw new CException("wrong attribute $attribute");
 
                 $require['imap4flags'] = true;
                 $action = 'setflag';
@@ -68,10 +68,12 @@ class SieveCreator
                 $actionsArr[] = $action;
             } else if ($action == 'Store in') {
                 if (empty($attribute) || !is_string($attribute))
-                    continue;
+                    throw new CException("wrong attribute");
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "fileinto \"$attribute\"";
                 $require['fileinto'] = true;
+            } else {
+                throw new CException("unknown action $action");
             }
         }
 
@@ -106,9 +108,9 @@ class SieveCreator
         if (in_array($attribute, array('From', 'Subject', 'Any To or Cc', 'X-Spam-Flag'))) {
             if (empty($rule['value']) || empty($rule['operation']) ||
                     !is_string($rule['value']) || !is_string($rule['operation']))
-                return '';
+                throw new CException("value or operation are wrong");
             if (!in_array($rule['operation'], array('is', 'is not')))
-                return '';
+                throw new CException("operation wrong");
 
             // if value surrounded by asterisks - convert operation to internal kind
             if (strpos($rule['value'], '*') === 0 && strrpos($rule['value'], '*') === strlen($rule['value']) - 1) {
@@ -145,9 +147,9 @@ class SieveCreator
             return $condition;
         } else if ($attribute == 'Message Size') {
             if (empty($rule['value']) || !is_numeric($rule['value']))
-                return '';
+                throw new CException("value is not numeric");
             if (!in_array($rule['operation'], array('is', 'is not', 'less than', 'greater than')))
-                return '';
+                throw new CException("wrong operation");
 
             $condition = '';
             $bytes = $rule['value'];

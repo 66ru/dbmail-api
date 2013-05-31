@@ -85,8 +85,11 @@ class SieveCreatorTest extends CTestCase
     public function assertFailGenerate($ruleName)
     {
         list($rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
-        $script = SieveCreator::generateSieveScript($ruleName, $rules, $actions);
-        $expected = str_replace('#rule=', '#rule=' . $ruleName, '');
-        $this->assertEquals($expected, $script);
+        try {
+            SieveCreator::generateSieveScript($ruleName, $rules, $actions);
+        } catch(CException $e) {
+            return;
+        }
+        $this->fail("Can't catch expected CException");
     }
 }

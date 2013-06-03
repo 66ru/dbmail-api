@@ -20,7 +20,9 @@ class GrabMailCommand extends GlobalConsoleCommand
      */
     public function getAvailableIds($busyIds)
     {
-        return EHtml::listData( GetMailRule::model()->dbCriteria->addNotInCondition('id', $busyIds) );
+        $model = new GetMailRule;
+        $model->dbCriteria->addNotInCondition('id', $busyIds);
+        return EHtml::listData($model);
     }
 
     /**

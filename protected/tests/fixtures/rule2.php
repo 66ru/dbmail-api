@@ -4,7 +4,7 @@ return array(
     array(
         'Subject' => array(
             'operation' => 'is',
-            'value' => '*bjec*'
+            'value' => '*тест*'
         )
     ),
     array(

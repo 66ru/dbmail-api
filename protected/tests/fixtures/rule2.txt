@@ -2,7 +2,7 @@ require "fileinto";
 
 #rule=rule2
 #require={"fileinto":true}
-if header :contains "Subject" "bjec" {
+if header :contains "Subject" "&BEIENQRBBEI-" {
     fileinto "Deleted Messages";
 }
 

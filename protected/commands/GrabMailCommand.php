@@ -37,7 +37,9 @@ class GrabMailCommand extends GlobalConsoleCommand
         /** @var GetMailRule[] $rules */
         $cmd = Yii::app()->params['getmail'];
         foreach ($ruleModel->findAll() as $rule) {
+            /** @var GetMailRule $rule */
             $ruleFileName = $rule->getRuleFileName();
+            mkdir(pathinfo($ruleFileName, PATHINFO_DIRNAME), 0777, true);
             file_put_contents($ruleFileName, $rule->getConfig());
             $cmd .= ' --rcfile ' . $ruleFileName;
         }

@@ -177,7 +177,7 @@ class SieveCreator
      */
     protected static function sieveEscape($str)
     {
-        return str_replace('"', '\\"', $str);
+        return str_replace('"', '\\"', iconv('UFT-8', 'UTF7-IMAP', $str));
     }
 
     /**

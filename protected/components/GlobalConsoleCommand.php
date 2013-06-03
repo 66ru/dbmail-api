@@ -119,8 +119,10 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
             $task->hostname = gethostname();
             $task->id = $taskId;
             try {
+                $oldErrorLevel = error_reporting(0);
                 if (!$task->save())
                     throw new Exception('can\'t save task: '.print_r($task->errors, true));
+                error_reporting($oldErrorLevel);
                 $queuedTaskIds[] = $taskId;
             } catch (CDbException $e) {
                 Yii::log("failed lock $task->id id", CLogger::LEVEL_INFO, 'cron');

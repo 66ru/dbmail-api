@@ -1,0 +1,15 @@
+{
+    "name": "66ru/dbmail-api",
+    "description": "dbmail http api server",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "m8rge",
+            "email": "to.merge@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*",
+        "phpunit/phpunit-selenium": "1.*"
+    }
+}

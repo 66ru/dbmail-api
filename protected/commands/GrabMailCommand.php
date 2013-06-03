@@ -31,13 +31,12 @@ class GrabMailCommand extends GlobalConsoleCommand
      */
     protected function startProcess($ids)
     {
-        $rules = GetMailRule::model();
-        $rules->dbCriteria->addInCondition('id', $ids);
-        $rules->findAll();
+        $ruleModel = GetMailRule::model();
+        $ruleModel->dbCriteria->addInCondition('id', $ids);
 
         /** @var GetMailRule[] $rules */
         $cmd = Yii::app()->params['getmail'];
-        foreach ($rules as $rule) {
+        foreach ($ruleModel->findAll() as $rule) {
             $ruleFileName = $rule->getRuleFileName();
             file_put_contents($ruleFileName, $rule->getConfig());
             $cmd .= ' --rcfile ' . $ruleFileName;

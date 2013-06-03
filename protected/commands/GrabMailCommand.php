@@ -39,7 +39,10 @@ class GrabMailCommand extends GlobalConsoleCommand
         foreach ($ruleModel->findAll() as $rule) {
             /** @var GetMailRule $rule */
             $ruleFileName = $rule->getRuleFileName();
-            mkdir(pathinfo($ruleFileName, PATHINFO_DIRNAME), 0777, true);
+            $ruleDirectory = pathinfo($ruleFileName, PATHINFO_DIRNAME);
+            if (!file_exists($ruleDirectory)) {
+                mkdir($ruleDirectory, 0777, true);
+            }
             file_put_contents($ruleFileName, $rule->getConfig());
             $cmd .= ' --rcfile ' . $ruleFileName;
         }

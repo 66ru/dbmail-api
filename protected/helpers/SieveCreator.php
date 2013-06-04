@@ -60,7 +60,7 @@ class SieveCreator
                     throw new CException("wrong attribute $attribute");
 
                 $require['imap4flags'] = true;
-                $action = 'setflag';
+                $action = 'keep :flags ';
                 if ($attribute == 'Flagged')
                     $action .= ' "\\\\Flagged"';
                 elseif ($attribute == 'Read')

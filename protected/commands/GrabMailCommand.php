@@ -64,6 +64,7 @@ class GrabMailCommand extends GlobalConsoleCommand
         $rule = GetMailRule::model()->findByPk($id);
 
         $rule->status = $rule->getRuleStatus();
+        unlink($rule->getLogFileName());
         $rule->save();
     }
 

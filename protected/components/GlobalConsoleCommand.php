@@ -3,7 +3,11 @@
 /**
  * Class GlobalConsoleCommand
  *
- * version 1.0
+ * version 2.0
+ *
+ * @property CDbConnection dbConnection
+ * @property CDbCommandBuilder commandBuilder
+ * @property string taskName
  */
 abstract class GlobalConsoleCommand extends CConsoleCommand
 {
@@ -29,11 +33,32 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     public $changeOwnerTimeout = 600; // 10m
 
     /**
+     * @var string table name with tasks lock information
+     */
+    public $tableName = 'CronLock';
+
+    /**
+     * @return CDbConnection Database connection.
+     */
+    public function getDbConnection()
+    {
+        return Yii::app()->getComponent('db');
+    }
+
+    /**
+     * @return CDbCommandBuilder
+     */
+    public function getCommandBuilder()
+    {
+        return $this->getDbConnection()->getCommandBuilder();
+    }
+
+    /**
      * @return string
      */
-    public function getTaskPrefix()
+    public function getTaskName()
     {
-        return 'prefix';
+        return 'taskName';
     }
 
     /**
@@ -65,21 +90,25 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     public function actionIndex()
     {
-        $myTasks = CronLock::model()->findAllByAttributes(array('hostname' => gethostname()));
-        /** @var CronLock[] $myTasks */
+        $myTasks = $this->findTasks(array('hostname' => gethostname()));
+
         foreach ($myTasks as $task) {
-            $processStartedTime = @filectime('/proc/' . $task->pid);
+            $processStartedTime = @filectime('/proc/' . $task['pid']); //todo: check pid to NULL
             if (!$processStartedTime) {
-                list($null, $ruleId) = explode('-', $task->id);
-                $this->postProcessing($ruleId);
-                $task->delete();
+                $this->postProcessing($task['taskId']); //todo: if this failed -> we do not delete task (
+                $this->removeTask($task['taskName'], $task['taskId']);
                 continue;
             } elseif ($processStartedTime + $this->longRunningTimeout < time()) {
-                Yii::log("task $task->id freezed", CLogger::LEVEL_WARNING, 'cron');
+                Yii::log("task {$task['id']} freezed", CLogger::LEVEL_WARNING, 'cron');
             }
-            $task->lastActivity = time();
-            if (!$task->save())
-                throw new Exception('can\'t save task: '.print_r($task->errors, true));
+
+            $this->commandBuilder->createUpdateCommand(
+                $this->tableName,
+                array(
+                    'lastActivity' => new CDbExpression('NOW()'),
+                ),
+                $this->createTaskCriteria($task['taskName'], $task['taskId'])
+            )->execute();
         }
 
         $this->releaseExpiredTasks();
@@ -89,23 +118,26 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     public function releaseExpiredTasks()
     {
-        $expiredTasks = CronLock::model()->findAll(
-            "lastActivity <= UNIX_TIMESTAMP() - :changeOwnerTimeout",
+        $expiredTasks = $this->findTasks(
             array(
-                ':changeOwnerTimeout' => $this->changeOwnerTimeout,
+                'condition' => 'lastActivity <= NOW() - FROM_UNIXTIME(:changeOwnerTimeout)',
+                'params' => array(
+                    ':changeOwnerTimeout' => $this->changeOwnerTimeout,
+                )
             )
         );
-        /** @var CronLock[] $expiredTasks */
+
         foreach ($expiredTasks as $task) {
             try {
-                if (!$task->delete())
-                    throw new Exception('can\'t delete task: '.print_r($task->attributes, true));
+                $this->removeTask($task['taskName'], $task['taskId']);
                 Yii::log(
-                    "task {$task->id}({$task->hostname}, last activity at {$task->lastActivity}) lock was released",
+                    "task {$task['id']}({$task['hostname']}, " .
+                    "last activity at {$task['lastActivity']}) lock was released by " . gethostname(),
                     CLogger::LEVEL_WARNING,
                     'cron'
                 );
             } catch (CDbException $e) {
+                continue;
             }
         }
     }
@@ -113,17 +145,20 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     protected function beginWork()
     {
         $queuedTaskIds = array();
-        $busyIds = EHtml::listData(CronLock::model());
-        foreach ($this->getAvailableTaskIds($busyIds) as $taskId) {
-            $task = new CronLock();
-            $task->hostname = gethostname();
-            $task->id = $taskId;
+
+        $busyIds = $this->findTasks(array('taskName' => $this->taskName));
+        foreach ($this->getAvailableIds($busyIds) as $taskId) {
             try {
-                if (!$task->save())
-                    throw new Exception('can\'t save task: '.print_r($task->errors, true));
+                $this->commandBuilder->createInsertCommand(
+                    $this->tableName,
+                    array(
+                        'hostname' => gethostname(),
+                        'taskName' => $this->taskName,
+                        'taskId' => $taskId,
+                    )
+                )->execute();
                 $queuedTaskIds[] = $taskId;
             } catch (CDbException $e) {
-                Yii::log("failed lock $task->id id", CLogger::LEVEL_INFO, 'cron');
                 continue;
             }
             if (count($queuedTaskIds) == $this->aggregateTasks) {
@@ -132,23 +167,9 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
             }
         }
 
-        if (!empty($queuedTaskIds))
+        if (!empty($queuedTaskIds)) {
             $this->startTasks($queuedTaskIds);
-    }
-
-    /**
-     * @param string[] $busyTaskIds
-     * @return string[]
-     */
-    protected function getAvailableTaskIds($busyTaskIds)
-    {
-        $busyIds = $this->TaskIdsToIds($busyTaskIds);
-
-        $availableIds = $this->getAvailableIds($busyIds);
-
-        $availableTaskIds = $this->idsToTaskIds($availableIds);
-
-        return $availableTaskIds;
+        }
     }
 
     /**
@@ -157,43 +178,55 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
      */
     protected function startTasks($taskIds)
     {
-        $pid = $this->startProcess( $this->TaskIdsToIds($taskIds) );
+        $pid = $this->startProcess($taskIds);
 
-        $c = new CDbCriteria();
-        $c->addInCondition('id', $taskIds);
-        CronLock::model()->updateAll(
+        $this->commandBuilder->createUpdateCommand(
+            $this->tableName,
             array(
                 'pid' => $pid,
-                'lastActivity' => time()
+                'lastActivity' => new CDbExpression('NOW()'),
             ),
-            $c
+            $this->createTaskCriteria($this->taskName, $taskIds)
+        )->execute();
+    }
+
+    /**
+     * @param string $taskName
+     * @param int $taskId
+     */
+    public function removeTask($taskName, $taskId)
+    {
+        $this->commandBuilder->createDeleteCommand(
+            $this->tableName,
+            $this->createTaskCriteria($taskName, $taskId)
+        )->execute();
+    }
+
+    /**
+     * @param string $taskName
+     * @param int|int[] $taskId
+     * @return CDbCriteria
+     */
+    public function createTaskCriteria($taskName, $taskId)
+    {
+        return $this->commandBuilder->createColumnCriteria(
+            $this->tableName,
+            array(
+                'taskName' => $taskName,
+                'taskId' => $taskId,
+            )
         );
     }
 
     /**
-     * @param string[] $taskIds
-     * @return int[]
-     */
-    protected function TaskIdsToIds($taskIds)
-    {
-        $ids = array();
-        foreach ($taskIds as $taskId) {
-            list($null, $ruleId) = explode('-', $taskId);
-            $ids[] = $ruleId;
-        }
-        return $ids;
-    }
-
-    /**
-     * @param $ids
+     * @param array $columns Columns parameter for CDbCommandBuilder::createColumnCriteria
      * @return array
      */
-    protected function idsToTaskIds($ids)
+    public function findTasks($columns)
     {
-        $taskIds = array();
-        foreach ($ids as $ruleId) {
-            $taskIds[] = $this->getTaskPrefix() . '-' . $ruleId;
-        }
-        return $taskIds;
+        $criteria = $this->commandBuilder->createColumnCriteria($this->tableName, $columns);
+        $tasks = $this->commandBuilder->createFindCommand($this->tableName, $criteria)->queryAll();
+
+        return $tasks;
     }
 }

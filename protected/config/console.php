@@ -58,6 +58,11 @@ return array(
             'routes' => $logRoutes,
         ),
     ),
-
+    'commandMap' => array(
+        'migrate' => array(
+            'class' => 'lib.yii.framework.cli.commands.MigrateCommand',
+            'migrationTable' => 'migration',
+        ),
+    ),
     'params' => require(__DIR__ . '/params.php'),
 );

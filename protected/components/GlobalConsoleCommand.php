@@ -216,6 +216,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     /**
      * @param array $task
+     * @throws CDbException
      */
     public function removeTask($task)
     {

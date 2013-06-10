@@ -6,12 +6,14 @@ class GccTestCommand extends GlobalConsoleCommand
     public $longRunningTimeout = 660; // 11m
     public $changeOwnerTimeout = 120; // 2m
 
-    /**
-     * @return string
-     */
     public function getTaskName()
     {
         return 'gcctest';
+    }
+
+    public function getDbConnection()
+    {
+        return Yii::app()->getComponent('getmaildb');
     }
 
     /**

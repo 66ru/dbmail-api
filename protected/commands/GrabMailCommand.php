@@ -6,12 +6,14 @@ class GrabMailCommand extends GlobalConsoleCommand
     public $longRunningTimeout = 7200; // 2h
     public $changeOwnerTimeout = 300; // 5m
 
-    /**
-     * @return string
-     */
     public function getTaskName()
     {
         return 'getmail';
+    }
+
+    public function getDbConnection()
+    {
+        return Yii::app()->getComponent('getmaildb');
     }
 
     /**

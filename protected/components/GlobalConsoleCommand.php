@@ -63,6 +63,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     /**
      * @param int[] $busyIds
+     * @throws Exception
      * @return int[] returns task ids available to processing
      */
     public function getAvailableIds($busyIds)
@@ -73,6 +74,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     /**
      * begin processing bunch of task ids
      * @param int[] $ids
+     * @throws Exception
      * @return int pid of started process
      */
     protected function startProcess($ids)
@@ -90,59 +92,76 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     public function actionIndex()
     {
+        $this->refreshAndCleanupTasks();
+        $this->releaseExpiredTasks();
+        $this->lockAndStartTasks();
+    }
+
+
+    public function refreshAndCleanupTasks()
+    {
         $myTasks = $this->findTasks(array('hostname' => gethostname()));
 
         foreach ($myTasks as $task) {
-            $processStartedTime = @filectime('/proc/' . $task['pid']); //todo: check pid to NULL
-            if (!$processStartedTime) {
-                $this->postProcessing($task['taskId']); //todo: if this failed -> we do not delete task (
-                $this->removeTask($task['taskName'], $task['taskId']);
-                continue;
-            } elseif ($processStartedTime + $this->longRunningTimeout < time()) {
-                Yii::log("task {$task['id']} freezed", CLogger::LEVEL_WARNING, 'cron');
+            if (empty($task['pid']) && empty($task['lastActivity'])) {
+                $this->logTask($task, 'failed to start', CLogger::LEVEL_ERROR);
+            } else {
+                $processStartedTime = @filectime('/proc/' . $task['pid']);
+                if (!$processStartedTime) {
+                    $this->postProcessing($task['taskId']); //todo: if this failed -> we do not delete task (
+                    try {
+                        $this->removeTask($task);
+                    } catch (CDbException $e) {
+                        $this->logTask($task, 'failed to remove lock', CLogger::LEVEL_ERROR);
+                        throw $e;
+                    }
+                    continue;
+                } elseif ($processStartedTime + $this->longRunningTimeout < time()) {
+                    $this->logTask($task, 'freezed', CLogger::LEVEL_WARNING);
+                }
             }
 
-            $this->commandBuilder->createUpdateCommand(
-                $this->tableName,
-                array(
-                    'lastActivity' => new CDbExpression('NOW()'),
-                ),
-                $this->createTaskCriteria($task['taskName'], $task['taskId'])
-            )->execute();
+            try {
+                $this->commandBuilder->createUpdateCommand(
+                    $this->tableName,
+                    array(
+                        'lastActivity' => new CDbExpression('NOW()'),
+                    ),
+                    $this->createTaskCriteria($task['taskName'], $task['taskId'])
+                )->execute();
+            } catch (CDbException $e) {
+                $this->logTask($task, 'failed to update lastActivity', CLogger::LEVEL_ERROR);
+                throw $e;
+            }
         }
-
-        $this->releaseExpiredTasks();
-
-        $this->beginWork();
     }
 
     public function releaseExpiredTasks()
     {
-        $expiredTasks = $this->findTasks(
+        $criteria = $this->commandBuilder->createCriteria(
+            'lastActivity <= NOW() - FROM_UNIXTIME(:changeOwnerTimeout)',
             array(
-                'condition' => 'lastActivity <= NOW() - FROM_UNIXTIME(:changeOwnerTimeout)',
-                'params' => array(
-                    ':changeOwnerTimeout' => $this->changeOwnerTimeout,
-                )
+                ':changeOwnerTimeout' => $this->changeOwnerTimeout,
             )
         );
+        $expiredTasks = $this->commandBuilder->createFindCommand($this->tableName, $criteria)->queryAll();
 
         foreach ($expiredTasks as $task) {
             try {
-                $this->removeTask($task['taskName'], $task['taskId']);
-                Yii::log(
-                    "task {$task['id']}({$task['hostname']}, " .
-                    "last activity at {$task['lastActivity']}) lock was released by " . gethostname(),
-                    CLogger::LEVEL_WARNING,
-                    'cron'
+                $this->removeTask($task);
+                $this->logTask(
+                    $task,
+                    "(last activity at {$task['lastActivity']}) lock was released by " . gethostname(),
+                    CLogger::LEVEL_WARNING
                 );
             } catch (CDbException $e) {
-                continue;
+                $this->logTask($task, 'failed to release lock', CLogger::LEVEL_ERROR);
+                throw $e;
             }
         }
     }
 
-    protected function beginWork()
+    protected function lockAndStartTasks()
     {
         $queuedTaskIds = array();
 
@@ -173,32 +192,36 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     }
 
     /**
-     * @param string[] $taskIds
-     * @throws CException
+     * @param int[] $taskIds
+     * @throws CDbException
      */
     protected function startTasks($taskIds)
     {
         $pid = $this->startProcess($taskIds);
 
-        $this->commandBuilder->createUpdateCommand(
-            $this->tableName,
-            array(
-                'pid' => $pid,
-                'lastActivity' => new CDbExpression('NOW()'),
-            ),
-            $this->createTaskCriteria($this->taskName, $taskIds)
-        )->execute();
+        try {
+            $this->commandBuilder->createUpdateCommand(
+                $this->tableName,
+                array(
+                    'pid' => $pid,
+                    'lastActivity' => new CDbExpression('NOW()'),
+                ),
+                $this->createTaskCriteria($this->taskName, $taskIds)
+            )->execute();
+        } catch (CDbException $e) {
+            Yii::log("failed update pid on {$this->taskName}-(" . implode(', ', $taskIds) . ")", CLogger::LEVEL_ERROR);
+            throw $e;
+        }
     }
 
     /**
-     * @param string $taskName
-     * @param int $taskId
+     * @param array $task
      */
-    public function removeTask($taskName, $taskId)
+    public function removeTask($task)
     {
         $this->commandBuilder->createDeleteCommand(
             $this->tableName,
-            $this->createTaskCriteria($taskName, $taskId)
+            $this->createTaskCriteria($task['taskName'], $task['taskId'])
         )->execute();
     }
 
@@ -228,5 +251,19 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $tasks = $this->commandBuilder->createFindCommand($this->tableName, $criteria)->queryAll();
 
         return $tasks;
+    }
+
+    /**
+     * @param array $task
+     * @param string $message
+     * @param $level
+     */
+    public function logTask($task, $message, $level)
+    {
+        Yii::log(
+            "task {$task['taskName']}-{$task['taskId']}@{$task['hostname']} " . $message,
+            $level,
+            'cron'
+        );
     }
 }

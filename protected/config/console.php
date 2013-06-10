@@ -62,6 +62,7 @@ return array(
         'migrate' => array(
             'class' => 'lib.yii.framework.cli.commands.MigrateCommand',
             'migrationTable' => 'migration',
+            'connectionID' => 'getmaildb',
         ),
     ),
     'params' => require(__DIR__ . '/params.php'),

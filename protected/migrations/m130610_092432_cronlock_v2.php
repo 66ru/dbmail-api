@@ -2,6 +2,11 @@
 
 class m130610_092432_cronlock_v2 extends CDbMigration
 {
+    public function getDbConnection()
+    {
+        return Yii::app()->getComponent('getmaildb');
+    }
+
 	public function up()
 	{
         $this->dropTable('CronLock');

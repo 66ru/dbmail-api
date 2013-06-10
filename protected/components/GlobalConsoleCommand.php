@@ -249,6 +249,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     public function findTasks($columns)
     {
         $criteria = $this->commandBuilder->createColumnCriteria($this->tableName, $columns);
+        $criteria->alias = $this->tableName;
         $tasks = $this->commandBuilder->createFindCommand($this->tableName, $criteria)->queryAll();
 
         return $tasks;

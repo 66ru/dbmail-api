@@ -139,7 +139,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
     public function releaseExpiredTasks()
     {
         $criteria = $this->commandBuilder->createCriteria(
-            'lastActivity <= NOW() - FROM_UNIXTIME(:changeOwnerTimeout)',
+            'lastActivity <= NOW() - INTERVAL :changeOwnerTimeout SECOND',
             array(
                 ':changeOwnerTimeout' => $this->changeOwnerTimeout,
             )

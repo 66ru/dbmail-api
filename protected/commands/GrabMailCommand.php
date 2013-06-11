@@ -11,11 +11,6 @@ class GrabMailCommand extends GlobalConsoleCommand
         return 'getmail';
     }
 
-    public function getDbConnection()
-    {
-        return Yii::app()->getComponent('getmaildb');
-    }
-
     /**
      * @param int[] $busyIds
      * @return int[]

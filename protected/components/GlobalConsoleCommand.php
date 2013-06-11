@@ -180,8 +180,7 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $pid = $this->startProcess($taskIds);
 
         try {
-            $criteria = CronLock::model()->getCommandBuilder()->createColumnCriteria(
-                CronLock::model()->tableName(),
+            $criteria = new CDbCriteria(
                 array(
                     'taskName' => $this->taskName,
                     'taskId' => $taskIds,
@@ -207,10 +206,6 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
      */
     public function logTask($task, $message, $level)
     {
-        Yii::log(
-            "task {$task->taskName}-{$task->taskId}@{$task->hostname} " . $message,
-            $level,
-            'cron'
-        );
+        Yii::log("task {$task->taskName}-{$task->taskId}@{$task->hostname} " . $message, $level, 'cron');
     }
 }

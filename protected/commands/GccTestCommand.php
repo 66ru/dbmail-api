@@ -11,11 +11,6 @@ class GccTestCommand extends GlobalConsoleCommand
         return 'gcctest';
     }
 
-    public function getDbConnection()
-    {
-        return Yii::app()->getComponent('getmaildb');
-    }
-
     /**
      * @param int[] $busyIds
      * @return int[]

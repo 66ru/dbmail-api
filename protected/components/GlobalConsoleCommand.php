@@ -180,7 +180,8 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $pid = $this->startProcess($taskIds);
 
         try {
-            $criteria = new CDbCriteria(
+            $criteria = new CDbCriteria();
+            $criteria->addColumnCondition(
                 array(
                     'taskName' => $this->taskName,
                     'taskId' => $taskIds,

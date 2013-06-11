@@ -24,6 +24,13 @@ class CronLock extends CActiveRecord
     {
         return Yii::app()->getComponent('getmaildb');
     }
+
+    public function rules()
+    {
+        return array(
+            array('taskName, taskId, hostname, lastActivity, pid', 'safe'),
+        );
+    }
 }
 
 /**

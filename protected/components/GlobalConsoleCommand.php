@@ -181,12 +181,8 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
         try {
             $criteria = new CDbCriteria();
-            $criteria->addColumnCondition(
-                array(
-                    'taskName' => $this->taskName,
-                    'taskId' => $taskIds,
-                )
-            );
+            $criteria->addColumnCondition(array('taskName' => $this->taskName));
+            $criteria->addInCondition('taskId', $taskIds);
             CronLock::model()->updateAll(
                 array(
                     'pid' => $pid,

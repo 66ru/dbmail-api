@@ -92,6 +92,9 @@ class SiteController extends Controller
                     ':username' => $_POST['userName'],
                 )
             );
+        if ($unreadCount === false) {
+            throw new CException('user not found');
+        }
 
         $this->sendAnswer(array('status' => 'ok', 'unreadCount' => $unreadCount));
     }

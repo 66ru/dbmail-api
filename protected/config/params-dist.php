@@ -9,7 +9,7 @@ return array(
     'dbmail-users' => '/usr/sbin/dbmail-users',
     'dbmail-sievecmd' => '/usr/sbin/dbmail-sievecmd',
 
-    'mailDomain' => '66.ru',
+    'defaultMailDomain' => '66.ru',
 
     'dbMailHost' => '',
     'dbMailUser' => '',

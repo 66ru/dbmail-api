@@ -47,7 +47,11 @@ class DBMailClient extends CComponent
      */
     public function createUser($userName, $password)
     {
-        $mailAlias = escapeshellarg($userName . '@' . Yii::app()->params['mailDomain']);
+        if (strpos($userName, '@') !== false) {
+            $mailAlias = $userName;
+        } else {
+            $mailAlias = escapeshellarg($userName . '@' . Yii::app()->params['defaultMailDomain']);
+        }
         $userName = escapeshellarg($userName);
         $password = escapeshellarg($password);
         $this->exec(Yii::app()->params['dbmail-users'] . " -a $userName -w $password");

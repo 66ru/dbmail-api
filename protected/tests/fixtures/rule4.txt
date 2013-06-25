@@ -2,7 +2,9 @@ require "imap4flags";
 
 #rule=rule4
 #require={"imap4flags":true}
+#rules={"Any To or Cc":{"operation":"is not","value":"*from*"}}
+#actions={"Mark":"Read"}
 if not header :contains ["Cc", "To"] "from" {
-    setflag "\\Seen";
+    keep :flags  "Seen";
 }
 

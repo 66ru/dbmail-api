@@ -2,7 +2,9 @@ require "imap4flags";
 
 #rule=rule3
 #require={"imap4flags":true}
+#rules={"From":{"operation":"is not","value":"from@mail.ru"}}
+#actions={"Mark":"Flagged"}
 if not header :is "From" "from@mail.ru" {
-    setflag "\\Flagged";
+    keep :flags  "Flagged";
 }
 

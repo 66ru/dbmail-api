@@ -1,10 +1,14 @@
 #rule=rule5
+#rules={"Message Size":{"operation":"is","value":"155"}}
+#actions={"Discard":true}
 if allof(size :over 154,
          size :under 156) {
     discard;
 }
 
 #rule=rule6
+#rules={"Message Size":{"operation":"greater than","value":"10000"},"From":{"operation":"is","value":"*from*"}}
+#actions={"Mirror to":"to@mail.ru"}
 if allof(size :over 10000,
          header :contains "From" "from") {
     redirect "to@mail.ru";

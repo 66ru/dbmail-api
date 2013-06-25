@@ -2,12 +2,16 @@ require "fileinto";
 
 #rule=rule1
 #require={"fileinto":true}
+#rules={"From":{"operation":"is","value":"from@mail.ru"}}
+#actions={"Store in":"INBOX"}
 if header :is "From" "from@mail.ru" {
     fileinto "INBOX";
 }
 
 #rule=rule2
 #require={"fileinto":true}
+#rules={"Subject":{"operation":"is","value":"*\u0442\u0435\u0441\u0442*"}}
+#actions={"Store in":"Deleted Messages"}
 if header :contains "Subject" "&BEIENQRBBEI-" {
     fileinto "Deleted Messages";
 }

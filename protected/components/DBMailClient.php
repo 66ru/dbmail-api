@@ -70,7 +70,13 @@ class DBMailClient extends CComponent
     {
         $userName = escapeshellarg($userName);
         $password = escapeshellarg($password);
-        $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -w $password -p crypt");
+        try {
+            $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -w $password -p crypt");
+        } catch (DBMailClientException $e) {
+            if ($e->getExitCode() != 1) { // todo: dbmail 3.0.2 bug
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -94,13 +100,39 @@ class DBMailClient extends CComponent
         passthru($cmd, $returnVal);
         $output = ob_get_clean();
         $lines = explode("\n", trim($output, " \r\n"));
-        if ($returnVal)
-            throw new DBMailClientException("'$cmd' returned code $returnVal with message: $output");
-        if (!empty($expectedLastString) && end($lines) != $expectedLastString)
-            throw new DBMailClientException("'$cmd' returned wrong output: $output");
+        if ($returnVal) {
+            throw new DBMailClientException("'$cmd' returned code $returnVal with message: $output", $returnVal, $output);
+        }
+        if (!empty($expectedLastString) && end($lines) != $expectedLastString) {
+            throw new DBMailClientException("'$cmd' returned wrong output: $output", $returnVal, $output);
+        }
 
         return $output;
     }
 }
 
-class DBMailClientException extends CException {};
+class DBMailClientException extends CException
+{
+    /** @var string */
+    protected $output;
+
+    /** @var int */
+    protected $exitCode;
+
+    public function __construct($message = "", $exitCode = 0, $output = '', \Exception $previous = null)
+    {
+        $this->exitCode = $exitCode;
+        $this->output = $output;
+        parent::__construct($message, 0, $previous);
+    }
+
+    public function getOutput()
+    {
+        return $this->output;
+    }
+
+    public function getExitCode()
+    {
+        return $this->exitCode;
+    }
+}

@@ -12,11 +12,11 @@ class SieveCreator
     {
         $requireArr = array();
 
-        $actions = self::getActions($actions, $requireArr);
+        $actionsString = self::getActions($actions, $requireArr);
         $conditions = self::getConditions($rules, $requireArr);
         $require = self::generateRequireHeader(array_keys($requireArr));
 
-        $actions = implode(";\n    ", $actions);
+        $actionsString = implode(";\n    ", $actionsString);
 
         // align conditions
         $conditions = implode(",\n", $conditions);
@@ -25,14 +25,16 @@ class SieveCreator
             $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
         $conditions = implode("\n", $conditionsArr);
 
-        if ($actions && $conditions) {
+        if ($actionsString && $conditions) {
             $sieve = $require . "#rule=$ruleName\n";
             if (!empty($requireArr))
                 $sieve .= '#require=' . json_encode($requireArr) . "\n";
+                $sieve .= '#rules=' . json_encode($rules) . "\n";
+                $sieve .= '#actions=' . json_encode($actions) . "\n";
 
             if (count($rules) > 1)
                 $conditions = "allof($conditions)";
-            $sieve .= "if $conditions {\n    $actions;\n}\n\n";
+            $sieve .= "if $conditions {\n    $actionsString;\n}\n\n";
             return $sieve;
         } else {
             return '';
@@ -62,9 +64,9 @@ class SieveCreator
                 $require['imap4flags'] = true;
                 $action = 'keep :flags ';
                 if ($attribute == 'Flagged')
-                    $action .= ' "\\\\Flagged"';
+                    $action .= ' "Flagged"';  // todo: dbmail 3.0.2 bug. must be $action .= ' "\\\\Flagged"';
                 elseif ($attribute == 'Read')
-                    $action .= ' "\\\\Seen"';
+                    $action .= ' "Seen"';  // todo: dbmail 3.0.2 bug. $action .= ' "\\\\Seen"';
                 $actionsArr[] = $action;
             } else if ($action == 'Store in') {
                 if (empty($attribute) || !is_string($attribute))

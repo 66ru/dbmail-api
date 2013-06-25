@@ -2,6 +2,8 @@ require "fileinto";
 
 #rule=rule2
 #require={"fileinto":true}
+#rules={"Subject":{"operation":"is","value":"*\u0442\u0435\u0441\u0442*"}}
+#actions={"Store in":"Deleted Messages"}
 if header :contains "Subject" "&BEIENQRBBEI-" {
     fileinto "Deleted Messages";
 }

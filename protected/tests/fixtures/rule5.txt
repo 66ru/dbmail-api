@@ -1,4 +1,6 @@
 #rule=rule5
+#rules={"Message Size":{"operation":"is","value":"155"}}
+#actions={"Discard":true}
 if allof(size :over 154,
          size :under 156) {
     discard;

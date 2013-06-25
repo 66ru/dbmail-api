@@ -9,6 +9,10 @@ class SiteController extends Controller
     {
         parent::init();
 
+        if (empty($_POST['secKey']) || $_POST['secKey']!= '&k3]E1v39"okbg2') {
+            throw new CHttpException(403);
+        }
+
         $this->dbMailClient = Yii::app()->dbmail;
     }
 

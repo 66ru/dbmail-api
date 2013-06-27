@@ -179,7 +179,7 @@ class SieveCreator
      */
     protected static function sieveEscape($str)
     {
-        return str_replace(['\\', '"'], ['\\\\', '\\"'], mb_convert_encoding($str, 'UTF7-IMAP', 'UTF-8'));
+        return str_replace(array('\\', '"'), array('\\\\', '\\"'), mb_convert_encoding($str, 'UTF7-IMAP', 'UTF-8'));
     }
 
     /**

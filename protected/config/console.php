@@ -44,10 +44,10 @@ return array(
         ),
         'getmaildb' => array(
             'class' => 'CDbConnection',
-            'connectionString' => "mysql:host={$params['dbMailHost']};dbname=getmail",
+            'connectionString' => "mysql:host={$params['getMailHost']};dbname=getmail",
             'emulatePrepare' => true,
-            'username' => $params['dbMailUser'],
-            'password' => $params['dbMailPassword'],
+            'username' => $params['getMailUser'],
+            'password' => $params['getMailPassword'],
             'charset' => 'utf8',
         ),
         'dbmail' => array(

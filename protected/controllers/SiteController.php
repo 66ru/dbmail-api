@@ -73,10 +73,23 @@ class SiteController extends Controller
     {
         $this->checkRequiredFields(array('userName'));
 
+        $rulesArray = array();
         $script = $this->dbMailClient->getScript($_POST['userName']);
-        preg_match_all('/^#rule=(.*?)$/m', $script, $matches);
+        preg_match_all('/^#rule=.+?\n\n/ms', $script, $matches);
+        foreach ($matches[0] as $fullRule) {
+            preg_match('/#rule=(.+)/', $fullRule, $ruleName);
+            $ruleName = $ruleName[1];
+            preg_match('/#rules=(.+)/', $fullRule, $rules);
+            $rules = json_decode($rules[1], true);
+            preg_match('/#actions=(.+)/', $fullRule, $actions);
+            $actions = json_decode($actions[1], true);
+            $rulesArray[ $ruleName ] = array(
+                'rules' => $rules,
+                'actions' => $actions,
+            );
+        }
 
-        $this->sendAnswer(array('status' => 'ok', 'rules' => $matches[1]));
+        $this->sendAnswer(array('status' => 'ok', 'rules' => $rulesArray));
     }
 
     public function actionGetUnreadCount()

@@ -60,12 +60,14 @@ class GrabMailCommand extends GlobalConsoleCommand
         /** @var GetMailRule $rule */
         $rule = GetMailRule::model()->findByPk($id);
 
-        if (!file_exists($rule->getLogFileName())) {
-            Yii::log("I want to post process log file ({$rule->getLogFileName()}) for rule {$rule->id}, but it doesn't exists", CLogger::LEVEL_WARNING);
-        } else {
-            $rule->status = $rule->getRuleStatus();
-            unlink($rule->getLogFileName());
-            $rule->save();
+        if ($rule) {
+            if (!file_exists($rule->getLogFileName())) {
+                Yii::log("I want to post process log file ({$rule->getLogFileName()}) for rule {$rule->id}, but it doesn't exists", CLogger::LEVEL_WARNING);
+            } else {
+                $rule->status = $rule->getRuleStatus();
+                unlink($rule->getLogFileName());
+                $rule->save();
+            }
         }
     }
 

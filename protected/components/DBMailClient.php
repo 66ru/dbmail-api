@@ -48,7 +48,7 @@ class DBMailClient extends CComponent
     public function createUser($userName, $password)
     {
         if (strpos($userName, '@') !== false) {
-            $mailAlias = $userName;
+            $mailAlias = escapeshellarg($userName);
         } else {
             $mailAlias = escapeshellarg($userName . '@' . Yii::app()->params['defaultMailDomain']);
         }
@@ -59,6 +59,7 @@ class DBMailClient extends CComponent
             $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -s $mailAlias");
         } catch (DBMailClientException $e) {
             $this->exec(Yii::app()->params['dbmail-users'] . " -d $userName");
+            throw $e;
         }
     }
 
@@ -97,7 +98,7 @@ class DBMailClient extends CComponent
     protected function exec($cmd, $expectedLastString = null)
     {
         ob_start();
-        passthru($cmd, $returnVal);
+        passthru($cmd . ' 2>&1', $returnVal);
         $output = ob_get_clean();
         $lines = explode("\n", trim($output, " \r\n"));
         if ($returnVal) {

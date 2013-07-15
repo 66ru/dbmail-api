@@ -1,5 +1,7 @@
 <?php
 
+setlocale(LC_CTYPE, 'ru_RU.UTF-8');
+
 class DBMailClient extends CComponent
 {
     public function init()

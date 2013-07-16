@@ -1,11 +1,12 @@
 <?php
 
-setlocale(LC_CTYPE, 'ru_RU.UTF-8');
-
 class DBMailClient extends CComponent
 {
     public function init()
     {
+        if (false === setlocale(LC_CTYPE, 'ru_RU.UTF-8')) {
+            Yii::log("Can't set ru_RU.UTF-8 locale", CLogger::LEVEL_WARNING);
+        }
     }
 
     /**

@@ -21,13 +21,13 @@ class GetmailHelper
 
         $oldErrorReporting = error_reporting();
         error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_ERROR);
-        $imapStream = imap_open('{' . $host . ':110/pop3/novalidate-cert}INBOX', $email, $password);
+        $imapStream = imap_open('{' . $host . ':110/pop3/novalidate-cert}INBOX', $email, $password, OP_SILENT);
         if ($imapStream) {
             imap_close($imapStream);
             error_reporting($oldErrorReporting);
             return self::POP3_DEFAULT;
         }
-        $imapStream = imap_open('{' . $host . ':995/pop3/ssl/novalidate-cert}INBOX', $email, $password);
+        $imapStream = imap_open('{' . $host . ':995/pop3/ssl/novalidate-cert}INBOX', $email, $password, OP_SILENT);
         if ($imapStream) {
             imap_close($imapStream);
             error_reporting($oldErrorReporting);

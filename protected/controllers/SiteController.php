@@ -103,7 +103,7 @@ class SiteController extends Controller
             FROM dbmail_messages M
             JOIN dbmail_mailboxes MB ON M.`mailbox_idnr` = MB.`mailbox_idnr`
             JOIN dbmail_users U ON MB.`owner_idnr` = U.`user_idnr` AND U.`userid` = :username
-            WHERE M.`seen_flag` = 0"
+            WHERE M.`seen_flag` = 0 && M.`deleted_flag` = 0 && MB.name LIKE 'INBOX%'"
         )->queryScalar(
                 array(
                     ':username' => $_POST['userName'],

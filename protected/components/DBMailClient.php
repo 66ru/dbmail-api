@@ -47,6 +47,7 @@ class DBMailClient extends CComponent
     /**
      * @param string $userName
      * @param string $password
+     * @throws DBMailClientException
      */
     public function createUser($userName, $password)
     {
@@ -69,6 +70,7 @@ class DBMailClient extends CComponent
     /**
      * @param string $userName
      * @param string $password
+     * @throws DBMailClientException
      */
     public function changePassword($userName, $password)
     {
@@ -90,6 +92,15 @@ class DBMailClient extends CComponent
     {
         $userName = escapeshellarg($userName);
         $this->exec(Yii::app()->params['dbmail-users'] . " -d $userName");
+    }
+
+    /**
+     * @param string $userName
+     */
+    public function truncateUser($userName)
+    {
+        $userName = escapeshellarg($userName);
+        $this->exec(Yii::app()->params['dbmail-users'] . " -e $userName");
     }
 
     /**

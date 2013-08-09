@@ -69,6 +69,14 @@ class SiteController extends Controller
         $this->sendAnswer(array('status' => 'ok'));
     }
 
+    public function actionTruncateUser()
+    {
+        $this->checkRequiredFields(array('userName'));
+
+        $this->dbMailClient->truncateUser($_POST['userName']);
+        $this->sendAnswer(array('status' => 'ok'));
+    }
+
     public function actionGetRules()
     {
         $this->checkRequiredFields(array('userName'));

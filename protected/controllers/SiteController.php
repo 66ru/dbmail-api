@@ -155,6 +155,48 @@ class SiteController extends Controller
         );
     }
 
+    public function actionEditGetMailRule()
+    {
+        $this->checkRequiredFields(array('userName', 'host', 'email', 'id'));
+
+        /** @var GetMailRule $rule */
+        $rule = GetMailRule::model()->findByPk($_POST['id']);
+        if ($rule->dbMailUserName !== $_POST['userName']) {
+            throw new CException('you are not the owner this rule');
+        }
+
+        if (!empty($rule)) {
+            if (!isset($_POST['delete']))
+                $_POST['delete'] = false;
+
+            $mailBoxType = GetmailHelper::determineMailboxType(
+                $_POST['host'],
+                $_POST['email'],
+                $_POST['password'] ? $_POST['password'] : $rule->password
+            );
+
+            $rule->host = $_POST['host'];
+            $rule->email = $_POST['email'];
+            if (!empty($_POST['password'])) {
+                $rule->password = $_POST['password'];
+            }
+            $rule->dbMailUserName = $_POST['userName'];
+            $rule->delete = $_POST['delete'];
+            $rule->ssl = $mailBoxType == GetmailHelper::POP3_SSL;
+            if (!$rule->save()) {
+                throw new CException('error while saving rule');
+            }
+        } else {
+            throw new CException('rule not found');
+        }
+
+        $this->sendAnswer(
+            array(
+                'status' => 'ok',
+            )
+        );
+    }
+
     public function actionRemoveGetMailRule()
     {
         $this->checkRequiredFields(array('ruleId'));

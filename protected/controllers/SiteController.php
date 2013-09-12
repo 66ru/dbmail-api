@@ -23,8 +23,9 @@ class SiteController extends Controller
 
         $this->checkRequiredFields(array('userName', 'ruleName', 'rules', 'actions'));
 
+        $rulesJoinOperator = !empty($_POST['rulesJoinOperator']) ? $_POST['rulesJoinOperator'] : 'and';
         $oldScript = $this->dbMailClient->getScript($_POST['userName']);
-        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $_POST['rules'], $_POST['actions']);
+        $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $rulesJoinOperator, $_POST['rules'], $_POST['actions']);
         if (!$newScript) {
             throw new DBMailClientException('Произошла ошибка при создании фильтра');
         }

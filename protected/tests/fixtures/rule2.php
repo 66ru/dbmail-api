@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'Subject' => array(
-            'operation' => 'is',
-            'value' => '*тест*'
+        array(
+            'Subject' => array(
+                'operation' => 'is',
+                'value' => '*тест*'
+            )
         )
     ),
     array(

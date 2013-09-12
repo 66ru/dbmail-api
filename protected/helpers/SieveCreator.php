@@ -4,11 +4,13 @@ class SieveCreator
 {
     /**
      * @param string $ruleName
+     * @param string $rulesJoinOperator
      * @param array $rules
      * @param array $actions
+     * @throws CException
      * @return string
      */
-    public static function generateSieveScript($ruleName, $rules, $actions)
+    public static function generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions)
     {
         $requireArr = array();
 
@@ -30,10 +32,19 @@ class SieveCreator
             if (!empty($requireArr))
                 $sieve .= '#require=' . json_encode($requireArr) . "\n";
                 $sieve .= '#rules=' . json_encode($rules) . "\n";
+                $sieve .= '#rulesJoinOperator=' . json_encode($rulesJoinOperator) . "\n";
                 $sieve .= '#actions=' . json_encode($actions) . "\n";
 
-            if (count($rules) > 1)
-                $conditions = "allof($conditions)";
+            if (count($rules) > 1) {
+                if ($rulesJoinOperator == 'and') {
+                    $conditions = "allof($conditions)";
+                } elseif ($rulesJoinOperator == 'or') {
+                    $conditions = "anyof($conditions)";
+                } else {
+                    throw new CException("rulesJoinOperator must be in [and, or]");
+                }
+            }
+
             $sieve .= "if $conditions {\n    $actionsString;\n}\n\n";
             return $sieve;
         } else {
@@ -44,6 +55,7 @@ class SieveCreator
     /**
      * @param array $actions
      * @param string[] $require
+     * @throws CException
      * @return string[]
      */
     protected static function getActions($actions, &$require)
@@ -90,19 +102,26 @@ class SieveCreator
     protected static function getConditions($rules, &$require)
     {
         $conditions = array();
-        foreach ($rules as $attribute => $rule) {
-            $condition = self::getCondition($attribute, $rule, $require);
-            if ($condition)
-                $conditions[] = $condition;
+        if (!isset($rules[0])) {
+            $rules = array($rules);
+        }
+        foreach ($rules as $rule) {
+            foreach ($rule as $attribute => $condition) {
+                $condition = self::getCondition($attribute, $condition, $require);
+                if ($condition) {
+                    $conditions[] = $condition;
+                }
+            }
         }
 
         return $conditions;
     }
 
     /**
-     * @param $rule array
      * @param $attribute string
+     * @param $rule array
      * @param string[] $require
+     * @throws CException
      * @return string my be empty
      */
     protected static function getCondition($attribute, $rule, &$require)
@@ -191,9 +210,9 @@ class SieveCreator
     {
         $conditionArr = array();
         if ($countRules > 1)
-            $align = '         ';
+            $align = str_repeat(' ', 9);
         else
-            $align = '   ';
+            $align = str_repeat(' ', 3);
         foreach (explode("\n", $condition) as $line) {
             $conditionArr[] = $align . $line;
         }

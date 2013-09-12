@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'From' => array(
-            'operation' => 'is not',
-            'value' => 'from@mail.ru'
+        array(
+            'From' => array(
+                'operation' => 'is not',
+                'value' => 'from@mail.ru'
+            )
         )
     ),
     array(

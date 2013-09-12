@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'From' => array(
-            'operation' => 'is',
-            'value' => array('wrong value format')
+        array(
+            'From' => array(
+                'operation' => 'is',
+                'value' => array('wrong value format')
+            )
         )
     ),
     array(

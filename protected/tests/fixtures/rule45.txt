@@ -2,14 +2,16 @@ require "imap4flags";
 
 #rule=rule4
 #require={"imap4flags":true}
-#rules={"Any To or Cc":{"operation":"is not","value":"*from*"}}
+#rules=[{"Any To or Cc":{"operation":"is not","value":"*from*"}}]
+#rulesJoinOperator="and"
 #actions={"Mark":"Read"}
 if not header :contains ["Cc", "To"] "from" {
     keep :flags  "Seen";
 }
 
 #rule=rule5
-#rules={"Message Size":{"operation":"is","value":"155"}}
+#rules=[{"Message Size":{"operation":"is","value":"155"}}]
+#rulesJoinOperator="and"
 #actions={"Discard":true}
 if allof(size :over 154,
          size :under 156) {

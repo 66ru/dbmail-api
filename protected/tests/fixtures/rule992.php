@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'From' => array(
-            'operation' => 'is',
-            'missing value' => ''
+        array(
+            'From' => array(
+                'operation' => 'is',
+                'missing value' => ''
+            )
         )
     ),
     array(

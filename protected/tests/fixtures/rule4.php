@@ -1,12 +1,16 @@
 <?php
 
 return array(
+    'and',
     array(
-        'Any To or Cc' => array(
-            'operation' => 'is not',
-            'value' => '*from*'
+        array(
+            'Any To or Cc' => array(
+                'operation' => 'is not',
+                'value' => '*from*'
+            )
         )
-    ),
+    )
+,
     array(
         'Mark' => 'Read'
     )

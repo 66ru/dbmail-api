@@ -24,6 +24,7 @@ class GrabMailCommand extends GlobalConsoleCommand
 
     /**
      * @param int[] $ids
+     * @throws CException
      * @return int pid of started process
      */
     protected function startProcess($ids)

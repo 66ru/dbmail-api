@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'Message Size' => array(
-            'operation' => 'is',
-            'value' => '155'
+        array(
+            'Message Size' => array(
+                'operation' => 'is',
+                'value' => '155'
+            )
         )
     ),
     array(

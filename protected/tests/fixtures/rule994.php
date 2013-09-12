@@ -1,10 +1,13 @@
 <?php
 
 return array(
+    'and',
     array(
-        'wrong attribute' => array(
-            'operation' => 'is',
-            'value' => 'from@mail.ru'
+        array(
+            'wrong attribute' => array(
+                'operation' => 'is',
+                'value' => 'from@mail.ru'
+            )
         )
     ),
     array(

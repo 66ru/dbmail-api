@@ -2,7 +2,8 @@ require "fileinto";
 
 #rule=rule1
 #require={"fileinto":true}
-#rules={"From":{"operation":"is","value":"from@mail.ru"}}
+#rules=[{"From":{"operation":"is","value":"from@mail.ru"}}]
+#rulesJoinOperator="and"
 #actions={"Store in":"INBOX"}
 if header :is "From" "from@mail.ru" {
     fileinto "INBOX";

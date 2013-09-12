@@ -1,7 +1,8 @@
 #rule=rule6
-#rules={"Message Size":{"operation":"greater than","value":"10000"},"From":{"operation":"is","value":"*from*"}}
+#rules=[{"Message Size":{"operation":"greater than","value":"10000"}},{"From":{"operation":"is","value":"*from*"}}]
+#rulesJoinOperator="or"
 #actions={"Mirror to":"to@mail.ru"}
-if allof(size :over 10000,
+if anyof(size :over 10000,
          header :contains "From" "from") {
     redirect "to@mail.ru";
 }

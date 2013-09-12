@@ -10,6 +10,7 @@ class SieveCreatorTest extends CTestCase
         $this->assertGenerate('rule4');
         $this->assertGenerate('rule5');
         $this->assertGenerate('rule6');
+        $this->assertLegacyGenerate('rule7');
     }
 
     public function testErrors()
@@ -25,6 +26,7 @@ class SieveCreatorTest extends CTestCase
         $this->assertFailGenerate('rule991');
         $this->assertFailGenerate('rule990');
         $this->assertFailGenerate('rule989');
+        $this->assertFailGenerate('rule988');
     }
 
     public function testMerges()
@@ -55,8 +57,16 @@ class SieveCreatorTest extends CTestCase
 
     public function assertGenerate($ruleName)
     {
+        list($rulesJoinOperator, $rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
+        $script = SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions);
+        $expected = file_get_contents(__DIR__ . "/../fixtures/$ruleName.txt");
+        $this->assertEquals($expected, $script);
+    }
+
+    public function assertLegacyGenerate($ruleName)
+    {
         list($rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
-        $script = SieveCreator::generateSieveScript($ruleName, $rules, $actions);
+        $script = SieveCreator::generateSieveScript($ruleName, 'and', $rules, $actions);
         $expected = file_get_contents(__DIR__ . "/../fixtures/$ruleName.txt");
         $this->assertEquals($expected, $script);
     }
@@ -84,9 +94,9 @@ class SieveCreatorTest extends CTestCase
 
     public function assertFailGenerate($ruleName)
     {
-        list($rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
+        list($rulesJoinOperator, $rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
         try {
-            SieveCreator::generateSieveScript($ruleName, $rules, $actions);
+            SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions);
         } catch(CException $e) {
             return;
         }

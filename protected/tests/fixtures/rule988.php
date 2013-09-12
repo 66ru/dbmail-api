@@ -1,10 +1,10 @@
 <?php
 
 return array(
-    'and',
+    'not a right join operator',
     array(
         array(
-            'From' => 'wrong string'
+            'From' => 'e@mail.ru'
         )
     ),
     array(

@@ -90,11 +90,17 @@ class SiteController extends Controller
             $ruleName = $ruleName[1];
             preg_match('/#rules=(.+)/', $fullRule, $rules);
             $rules = json_decode($rules[1], true);
+            if (preg_match('/#rulesJoinOperator=(.+)/', $fullRule, $rulesJoinOperator)) {
+                $rulesJoinOperator = json_decode($rulesJoinOperator[1], true);
+            } else {
+                $rulesJoinOperator = 'and';
+            }
             preg_match('/#actions=(.+)/', $fullRule, $actions);
             $actions = json_decode($actions[1], true);
             $rulesArray[ $ruleName ] = array(
                 'rules' => $rules,
                 'actions' => $actions,
+                'rulesJoinOperator' => $rulesJoinOperator,
             );
         }
 

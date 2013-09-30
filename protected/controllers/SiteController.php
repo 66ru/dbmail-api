@@ -54,6 +54,14 @@ class SiteController extends Controller
         $this->sendAnswer(array('status' => 'ok'));
     }
 
+    public function actionIsUserPresent()
+    {
+        $this->checkRequiredFields(array('userName'));
+
+        $found = User::model()->countByAttributes(array('userid' => $_POST['userName']));
+        $this->sendAnswer(array('status' => 'ok', 'found' => (bool)$found));
+    }
+
     public function actionChangePassword()
     {
         $this->checkRequiredFields(array('userName', 'password'));

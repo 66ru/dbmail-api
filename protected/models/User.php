@@ -31,7 +31,7 @@ class User extends CActiveRecord
 
     public function tableName()
     {
-        return 'users';
+        return 'dbmail_users';
     }
 
     public function relations()

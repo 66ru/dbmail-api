@@ -65,58 +65,54 @@
 * `userName`, string - Имя пользователя в dbmail.
 * `ruleName`, string - Название правила.
 * `rulesJoinOperator`, string - Логический оператор, который будет применятся 
+* `disabled`, bool - Отключить правило. Как правило, используется в связке с пересылкой писем для временного отключения правила до валидации конечного email.
 * `rules`, string, json array - Правила фильтра. Формат:
 
-```js
-[
-    {
-        attribute: rule,
-    },
-    {
-        ["From" | "Subject" | "Any To or Cc", "X-Spam-Flag"]: {
-            "operation": ["is" | "is not"],
-            "value": ["compare string", "*substring*"]
+    ```js
+    [
+        {
+            attribute: rule,
         },
-    },
-    {
-        "Message Size": {
-            "operation": ["is" | "is not" | "less than" | "greater than"],
-            "value": bytesInteger,
+        {
+            ["From" | "Subject" | "Any To or Cc", "X-Spam-Flag"]: {
+                "operation": ["is" | "is not"],
+                "value": ["compare string", "*substring*"]
+            },
         },
-    },
-    {
-        "Disabled": true,
-    },
-    ...
-]
-```
-Возможно фильтровать по слеующим полям в сообщении:
- * `From` - Отправитель. Поле From в оригинальном сообщении.
- * `Subject` - Тема сообщения. Поле Subject в оригинальном сообщении.
- * `Any To or Cc` - Адресаты. Поля Cc или To в оригинальном сообщении. 
- * `X-Spam-Flag` - Флаг спама. Поле X-Spam-Flag в оригинальном сообщении.
-
-`Disabled` в качестве аттрибута используется для отключении правила. Как правило, используется в связке с action = `Mirror to` для временного отключения правила до валидации конечного email.
+        {
+            "Message Size": {
+                "operation": ["is" | "is not" | "less than" | "greater than"],
+                "value": bytesInteger,
+            },
+        },
+        ...
+    ]
+    ```
+    Возможно фильтровать по слеующим полям в сообщении:
+     * `From` - Отправитель. Поле From в оригинальном сообщении.
+     * `Subject` - Тема сообщения. Поле Subject в оригинальном сообщении.
+     * `Any To or Cc` - Адресаты. Поля Cc или To в оригинальном сообщении. 
+     * `X-Spam-Flag` - Флаг спама. Поле X-Spam-Flag в оригинальном сообщении.
 
 При проверке размера сообщения (`attribute` == `Message Size`), операции сравнения меньше чем (`less than`) и больше чем (`greater than`) являются строгими.
 * `actions`, string, json object - Действие с письмами. Допускается одно действие. Формат:
 
-```js
-{
-    action: attribute
-}
-```
+    ```js
+    {
+        action: attribute
+    }
+    ```
 
-```js
-{
-    ["Discard", "Mark", "Store in"]: "attribute"
-}
-```
-где `action` может принимать следующие значения:
- * `Discard` - Удалить письмо. `attribute` при этом игнорируется.
- * `Mark` - Пометить письмо прочтенным (`attribute` == `Read`) либо избранным (`attribute` == `Flagged`).
- * `Store in` - Переместить в папку `attribute`.
- * `Mirror to` - Переслать письмо на email, который содержится в `attribute`.
+    ```js
+    {
+        ["Discard", "Mark", "Store in"]: "attribute"
+    }
+    ```
+    где `action` может принимать следующие значения:
+     * `Discard` - Удалить письмо. `attribute` при этом игнорируется.
+     * `Mark` - Пометить письмо прочтенным (`attribute` == `Read`) либо избранным (`attribute` == `Flagged`).
+     * `Store in` - Переместить в папку `attribute`.
+     * `Mirror to` - Переслать письмо на email, который содержится в `attribute`.
 
 ### Возвращает в случае успешной работы:
 ```js

@@ -1,9 +1,10 @@
 ## Замечания
 * Все поля в api являются обязательными, если не указано обратного.
 * Все методы в случае ошибки возвращают следующую структуру:
-```js
-{"status": "error", "message": "error message text"}
-```
+
+    ```js
+    {"status": "error", "message": "error message text"}
+    ```
 * Внутренняя структура api в некоторой части продиктована текущим строением [webmail](https://github.com/mediasite/webmail).
 
 ## POST `/createUser`
@@ -65,6 +66,7 @@
 * `ruleName`, string - Название правила.
 * `rulesJoinOperator`, string - Логический оператор, который будет применятся 
 * `rules`, string, json array - Правила фильтра. Формат:
+
 ```js
 [
     {
@@ -82,6 +84,9 @@
             "value": bytesInteger,
         },
     },
+    {
+        "Disabled": true,
+    },
     ...
 ]
 ```
@@ -91,13 +96,17 @@
  * `Any To or Cc` - Адресаты. Поля Cc или To в оригинальном сообщении. 
  * `X-Spam-Flag` - Флаг спама. Поле X-Spam-Flag в оригинальном сообщении.
 
-    При проверке размера сообщения (`attribute` == `Message Size`), операции сравнения меньше чем (`less than`) и больше чем (`greater than`) являются строгими.
+`Disabled` в качестве аттрибута используется для отключении правила. Как правило, используется в связке с action = `Mirror to` для временного отключения правила до валидации конечного email.
+
+При проверке размера сообщения (`attribute` == `Message Size`), операции сравнения меньше чем (`less than`) и больше чем (`greater than`) являются строгими.
 * `actions`, string, json object - Действие с письмами. Допускается одно действие. Формат:
+
 ```js
 {
     action: attribute
 }
 ```
+
 ```js
 {
     ["Discard", "Mark", "Store in"]: "attribute"
@@ -107,6 +116,7 @@
  * `Discard` - Удалить письмо. `attribute` при этом игнорируется.
  * `Mark` - Пометить письмо прочтенным (`attribute` == `Read`) либо избранным (`attribute` == `Flagged`).
  * `Store in` - Переместить в папку `attribute`.
+ * `Mirror to` - Переслать письмо на email, который содержится в `attribute`.
 
 ### Возвращает в случае успешной работы:
 ```js

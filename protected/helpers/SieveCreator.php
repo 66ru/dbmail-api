@@ -29,17 +29,19 @@ class SieveCreator
         // align conditions
         $conditions = implode(",\n", $conditions);
         $conditionsArr = array();
-        foreach (explode("\n", $conditions) as $condition)
+        foreach (explode("\n", $conditions) as $condition) {
             $conditionsArr[] = empty($conditionsArr) ? $condition : self::alignCondition($condition, count($rules));
+        }
         $conditions = implode("\n", $conditionsArr);
 
         if ($actionsString && $conditions) {
             $sieve = $require . "#rule=$ruleName\n";
-            if (!empty($requireArr))
+            if (!empty($requireArr)) {
                 $sieve .= '#require=' . json_encode($requireArr) . "\n";
-                $sieve .= '#rules=' . json_encode($rules) . "\n";
-                $sieve .= '#rulesJoinOperator=' . json_encode($rulesJoinOperator) . "\n";
-                $sieve .= '#actions=' . json_encode($actions) . "\n";
+            }
+            $sieve .= '#rules=' . json_encode($rules) . "\n";
+            $sieve .= '#rulesJoinOperator=' . json_encode($rulesJoinOperator) . "\n";
+            $sieve .= '#actions=' . json_encode($actions) . "\n";
 
             if (count($rules) > 1) {
                 if ($rulesJoinOperator == 'and') {
@@ -74,25 +76,29 @@ class SieveCreator
         foreach ($actions as $action => $attribute) {
             if ($action == 'Discard') {
                 $actionsArr[] = 'discard';
-            } else if ($action == 'Mirror to') {
-                if (!is_string($attribute) || !preg_match('#^.+?@.+?\..+?$#', $attribute))
+            } elseif ($action == 'Mirror to') {
+                if (!is_string($attribute) || !preg_match('#^.+?@.+?\..+?$#', $attribute)) {
                     throw new CException("wrong email $attribute");
+                }
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "redirect \"$attribute\"";
-            } else if ($action == 'Mark') {
-                if (!is_string($attribute) || !in_array($attribute, array('Flagged', 'Read')))
+            } elseif ($action == 'Mark') {
+                if (!is_string($attribute) || !in_array($attribute, array('Flagged', 'Read'))) {
                     throw new CException("wrong attribute $attribute");
+                }
 
                 $require['imap4flags'] = true;
                 $action = 'keep :flags ';
-                if ($attribute == 'Flagged')
-                    $action .= ' "Flagged"';  // todo: dbmail 3.0.2 bug. must be $action .= ' "\\\\Flagged"';
-                elseif ($attribute == 'Read')
-                    $action .= ' "Seen"';  // todo: dbmail 3.0.2 bug. $action .= ' "\\\\Seen"';
+                if ($attribute == 'Flagged') {
+                    $action .= ' "Flagged"'; // todo: dbmail 3.0.2 bug. must be $action .= ' "\\\\Flagged"';
+                } elseif ($attribute == 'Read') {
+                    $action .= ' "Seen"'; // todo: dbmail 3.0.2 bug. $action .= ' "\\\\Seen"';
+                }
                 $actionsArr[] = $action;
-            } else if ($action == 'Store in') {
-                if (empty($attribute) || !is_string($attribute))
+            } elseif ($action == 'Store in') {
+                if (empty($attribute) || !is_string($attribute)) {
                     throw new CException("wrong attribute");
+                }
                 $attribute = self::sieveEscape($attribute);
                 $actionsArr[] = "fileinto \"$attribute\"";
                 $require['fileinto'] = true;
@@ -138,17 +144,20 @@ class SieveCreator
     {
         if (in_array($attribute, array('From', 'Subject', 'Any To or Cc', 'X-Spam-Flag'))) {
             if (empty($rule['value']) || empty($rule['operation']) ||
-                    !is_string($rule['value']) || !is_string($rule['operation']))
+                !is_string($rule['value']) || !is_string($rule['operation'])
+            ) {
                 throw new CException("value or operation are wrong");
-            if (!in_array($rule['operation'], array('is', 'is not')))
+            }
+            if (!in_array($rule['operation'], array('is', 'is not'))) {
                 throw new CException("operation wrong");
+            }
 
             // if value surrounded by asterisks - convert operation to internal kind
             if (strpos($rule['value'], '*') === 0 && strrpos($rule['value'], '*') === strlen($rule['value']) - 1) {
                 if ($rule['operation'] == 'is') {
                     $rule['operation'] = 'in';
                     $rule['value'] = trim($rule['value'], '*');
-                } else if ($rule['operation'] == 'is not') {
+                } elseif ($rule['operation'] == 'is not') {
                     $rule['operation'] = 'not in';
                     $rule['value'] = trim($rule['value'], '*');
                 }
@@ -162,37 +171,40 @@ class SieveCreator
             }
 
             $condition = '';
-            if ($rule['operation'] == 'is')
+            if ($rule['operation'] == 'is') {
                 $condition = "header :is";
-            else if ($rule['operation'] == 'is not')
+            } elseif ($rule['operation'] == 'is not') {
                 $condition = "not header :is";
-            else if ($rule['operation'] == 'in')
+            } elseif ($rule['operation'] == 'in') {
                 $condition = "header :contains";
-            else if ($rule['operation'] == 'not in')
+            } elseif ($rule['operation'] == 'not in') {
                 $condition = "not header :contains";
+            }
 
             $text = self::sieveEscape($rule['value']);
             $text = "\"$text\"";
             $condition .= " $attribute $text";
 
             return $condition;
-        } else if ($attribute == 'Message Size') {
-            if (empty($rule['value']) || !is_numeric($rule['value']))
+        } elseif ($attribute == 'Message Size') {
+            if (empty($rule['value']) || !is_numeric($rule['value'])) {
                 throw new CException("value is not numeric");
-            if (!in_array($rule['operation'], array('is', 'is not', 'less than', 'greater than')))
+            }
+            if (!in_array($rule['operation'], array('is', 'is not', 'less than', 'greater than'))) {
                 throw new CException("wrong operation");
+            }
 
             $condition = '';
             $bytes = $rule['value'];
             if ($rule['operation'] == 'less than') {
                 $condition = "size :under $bytes";
-            } else if ($rule['operation'] == 'greater than') {
+            } elseif ($rule['operation'] == 'greater than') {
                 $condition = "size :over $bytes";
-            } else if ($rule['operation'] == 'is') {
+            } elseif ($rule['operation'] == 'is') {
                 $bytesMinus1 = $bytes - 1;
                 $bytesPlus1 = $bytes + 1;
                 $condition = "allof(size :over $bytesMinus1,\n      size :under $bytesPlus1)";
-            } else if ($rule['operation'] == 'is not') {
+            } elseif ($rule['operation'] == 'is not') {
                 $condition = "anyof(size :under $bytes,\n      size :over $bytes)";
             }
 
@@ -221,10 +233,11 @@ class SieveCreator
     protected static function alignCondition($condition, $countRules)
     {
         $conditionArr = array();
-        if ($countRules > 1)
+        if ($countRules > 1) {
             $align = str_repeat(' ', 9);
-        else
+        } else {
             $align = str_repeat(' ', 3);
+        }
         foreach (explode("\n", $condition) as $line) {
             $conditionArr[] = $align . $line;
         }
@@ -253,8 +266,9 @@ class SieveCreator
             $requireArr[] = "\"$requireElement\"";
         }
         $requireStr = implode(', ', $requireArr);
-        if (count($requireArr) > 1)
+        if (count($requireArr) > 1) {
             $requireStr = '[' . $requireStr . ']';
+        }
 
         return $requireStr ? "require $requireStr;\n\n" : '';
     }

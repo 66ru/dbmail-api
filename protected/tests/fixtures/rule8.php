@@ -15,11 +15,9 @@ return array(
                 'value' => '*from*'
             )
         ),
-        array(
-            'Disabled' => true,
-        )
     ),
     array(
         'Mirror to' => 'to@mail.ru'
-    )
+    ),
+    true,
 );

@@ -61,8 +61,8 @@ class SieveCreatorTest extends CTestCase
 
     public function assertGenerate($ruleName)
     {
-        list($rulesJoinOperator, $rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
-        $script = SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions);
+        @list($rulesJoinOperator, $rules, $actions, $disabled) = require(__DIR__ . "/../fixtures/$ruleName.php");
+        $script = SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions, (bool)$disabled);
         $expected = file_get_contents(__DIR__ . "/../fixtures/$ruleName.txt");
         $this->assertEquals($expected, $script);
     }
@@ -98,9 +98,9 @@ class SieveCreatorTest extends CTestCase
 
     public function assertFailGenerate($ruleName)
     {
-        list($rulesJoinOperator, $rules, $actions) = require(__DIR__ . "/../fixtures/$ruleName.php");
+        @list($rulesJoinOperator, $rules, $actions, $disabled) = require(__DIR__ . "/../fixtures/$ruleName.php");
         try {
-            SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions);
+            SieveCreator::generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions, (bool)$disabled);
         } catch(CException $e) {
             return;
         }

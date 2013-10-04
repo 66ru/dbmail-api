@@ -7,22 +7,17 @@ class SieveCreator
      * @param string $rulesJoinOperator
      * @param array $rules
      * @param array $actions
+     * @param bool $ruleDisabled
      * @throws CException
      * @return string
      */
-    public static function generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions)
+    public static function generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions, $ruleDisabled = false)
     {
         $requireArr = array();
-        $ruleDisabled = false;
 
         $actionsString = self::getActions($actions, $requireArr);
         $conditions = self::getConditions($rules, $requireArr);
         $require = self::generateRequireHeader(array_keys($requireArr));
-        foreach ($rules as $rule) {
-            if (isset($rule['Disabled'])) {
-                $ruleDisabled = true;
-            }
-        }
 
         $actionsString = implode(";\n    ", $actionsString);
 
@@ -41,6 +36,7 @@ class SieveCreator
             }
             $sieve .= '#rules=' . json_encode($rules) . "\n";
             $sieve .= '#rulesJoinOperator=' . json_encode($rulesJoinOperator) . "\n";
+            $sieve .= $ruleDisabled ? '#disabled=' . json_encode($ruleDisabled) . "\n" : '';
             $sieve .= '#actions=' . json_encode($actions) . "\n";
 
             if (count($rules) > 1) {

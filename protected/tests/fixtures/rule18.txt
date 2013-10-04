@@ -10,8 +10,9 @@ if header :is "From" "from@mail.ru" {
 }
 
 #rule=rule8
-#rules=[{"Message Size":{"operation":"greater than","value":"10000"}},{"From":{"operation":"is","value":"*from*"}},{"Disabled":true}]
+#rules=[{"Message Size":{"operation":"greater than","value":"10000"}},{"From":{"operation":"is","value":"*from*"}}]
 #rulesJoinOperator="or"
+#disabled=true
 #actions={"Mirror to":"to@mail.ru"}
 #if anyof(size :over 10000,
 #         header :contains "From" "from") {

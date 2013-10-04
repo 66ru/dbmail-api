@@ -24,7 +24,7 @@ class SiteController extends Controller
         $this->checkRequiredFields(array('userName', 'ruleName', 'rules', 'actions'));
 
         $rulesJoinOperator = !empty($_POST['rulesJoinOperator']) ? $_POST['rulesJoinOperator'] : 'and';
-        $disabled = !empty($_POST['disabled']) ? $_POST['disabled'] : false;
+        $disabled = !empty($_POST['disabled']) ? (bool)$_POST['disabled'] : false;
         $oldScript = $this->dbMailClient->getScript($_POST['userName']);
         $newScript = SieveCreator::generateSieveScript($_POST['ruleName'], $rulesJoinOperator, $_POST['rules'], $_POST['actions'], $disabled);
         if (!$newScript) {

@@ -13,10 +13,16 @@ class SieveCreator
     public static function generateSieveScript($ruleName, $rulesJoinOperator, $rules, $actions)
     {
         $requireArr = array();
+        $ruleDisabled = false;
 
         $actionsString = self::getActions($actions, $requireArr);
         $conditions = self::getConditions($rules, $requireArr);
         $require = self::generateRequireHeader(array_keys($requireArr));
+        foreach ($rules as $rule) {
+            if (isset($rule['Disabled'])) {
+                $ruleDisabled = true;
+            }
+        }
 
         $actionsString = implode(";\n    ", $actionsString);
 
@@ -45,7 +51,11 @@ class SieveCreator
                 }
             }
 
-            $sieve .= "if $conditions {\n    $actionsString;\n}\n\n";
+            $sieveRule = "if $conditions {\n    $actionsString;\n}\n\n";
+            if ($ruleDisabled) {
+                $sieveRule = preg_replace('/^(?!$)/m', '#', $sieveRule);
+            }
+            $sieve .= $sieveRule;
             return $sieve;
         } else {
             return '';
@@ -187,6 +197,8 @@ class SieveCreator
             }
 
             return $condition;
+        } elseif ($attribute == 'Disabled') {
+            return ''; // allowed attribute
         } else {
             throw new CException("unknown attribute $attribute");
         }

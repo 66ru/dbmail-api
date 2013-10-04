@@ -11,6 +11,7 @@ class SieveCreatorTest extends CTestCase
         $this->assertGenerate('rule5');
         $this->assertGenerate('rule6');
         $this->assertLegacyGenerate('rule7');
+        $this->assertGenerate('rule8');
     }
 
     public function testErrors()
@@ -32,6 +33,7 @@ class SieveCreatorTest extends CTestCase
     public function testMerges()
     {
         $this->assertMerge('rule1', 'rule2');
+        $this->assertMerge('rule1', 'rule8');
         $this->assertMerge('rule2', 'rule3');
         $this->assertMerge('rule3', 'rule2');
         $this->assertMerge('rule4', 'rule5');
@@ -43,6 +45,8 @@ class SieveCreatorTest extends CTestCase
     {
         $this->assertDelete('rule12', 'rule1');
         $this->assertDelete('rule12', 'rule2');
+        $this->assertDelete('rule18', 'rule1');
+        $this->assertDelete('rule18', 'rule8');
         $this->assertDelete('rule23', 'rule2');
         $this->assertDelete('rule23', 'rule3');
         $this->assertDelete('rule32', 'rule3');

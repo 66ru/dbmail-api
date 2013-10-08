@@ -58,7 +58,7 @@ class DBMailClient extends CComponent
         }
         $userName = escapeshellarg($userName);
         $password = escapeshellarg($password);
-        $this->exec(Yii::app()->params['dbmail-users'] . " -a $userName -w $password");
+        $this->exec(Yii::app()->params['dbmail-users'] . " -a $userName -w $password -p crypt");
         try {
             $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -s $mailAlias");
         } catch (DBMailClientException $e) {

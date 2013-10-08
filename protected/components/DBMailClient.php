@@ -77,7 +77,7 @@ class DBMailClient extends CComponent
         $userName = escapeshellarg($userName);
         $password = escapeshellarg($password);
         try {
-            $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -w $password");
+            $this->exec(Yii::app()->params['dbmail-users'] . " -c $userName -w $password -p crypt");
         } catch (DBMailClientException $e) {
             if ($e->getExitCode() != 1) { // todo: dbmail 3.0.2 bug
                 throw $e;

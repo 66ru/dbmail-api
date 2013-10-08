@@ -104,11 +104,17 @@ class SiteController extends Controller
             } else {
                 $rulesJoinOperator = 'and';
             }
+            if (preg_match('/#disabled=(.+)/', $fullRule, $disabled)) {
+                $disabled = json_decode($disabled[1], true);
+            } else {
+                $disabled = false;
+            }
             preg_match('/#actions=(.+)/', $fullRule, $actions);
             $actions = json_decode($actions[1], true);
             $rulesArray[ $ruleName ] = array(
                 'rules' => $rules,
                 'actions' => $actions,
+                'disabled' => $disabled,
                 'rulesJoinOperator' => $rulesJoinOperator,
             );
         }

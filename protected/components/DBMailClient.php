@@ -100,7 +100,7 @@ class DBMailClient extends CComponent
     public function truncateUser($userName)
     {
         $userName = escapeshellarg($userName);
-        $this->exec(Yii::app()->params['dbmail-users'] . " -e $userName");
+        $this->exec(Yii::app()->params['dbmail-users'] . " -e $userName -y");
     }
 
     /**

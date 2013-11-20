@@ -6,6 +6,6 @@ require "imap4flags";
 #rulesJoinOperator="and"
 #actions={"Mark":"Read"}
 if not header :contains ["Cc", "To"] "from" {
-    keep :flags  "Seen";
+    addflag "Seen";
 }
 

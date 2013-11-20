@@ -84,11 +84,11 @@ class SieveCreator
                 }
 
                 $require['imap4flags'] = true;
-                $action = 'keep :flags ';
+                $action = 'addflag ';
                 if ($attribute == 'Flagged') {
-                    $action .= ' "Flagged"'; // todo: dbmail 3.0.2 bug. must be $action .= ' "\\\\Flagged"';
+                    $action .= '"Flagged"'; // todo: dbmail 3.1.7 bug. must be $action .= ' "\\\\Flagged"';
                 } elseif ($attribute == 'Read') {
-                    $action .= ' "Seen"'; // todo: dbmail 3.0.2 bug. $action .= ' "\\\\Seen"';
+                    $action .= '"Seen"'; // todo: dbmail 3.1.7 bug. $action .= ' "\\\\Seen"';
                 }
                 $actionsArr[] = $action;
             } elseif ($action == 'Store in') {
@@ -248,7 +248,8 @@ class SieveCreator
      */
     public static function mergeScripts($oldScript, $newScript)
     {
-        return self::rebuildRequireHeader($oldScript . $newScript);
+        $script = self::rebuildRequireHeader($oldScript . $newScript);
+        return self::reorderRules($script);
     }
 
     /**
@@ -269,6 +270,10 @@ class SieveCreator
         return $requireStr ? "require $requireStr;\n\n" : '';
     }
 
+    /**
+     * @param string $script
+     * @return string
+     */
     protected static function rebuildRequireHeader($script)
     {
         // delete old require headers
@@ -289,11 +294,55 @@ class SieveCreator
         return $script;
     }
 
+    /**
+     * @param string $ruleName
+     * @param string $script
+     * @return string
+     */
     public static function removeRule($ruleName, $script)
     {
         $ruleName = preg_quote($ruleName, '/');
         $script = preg_replace('/^#rule=' . $ruleName . '.*?\n\n/ms', '', $script);
 
         return self::rebuildRequireHeader($script);
+    }
+
+    /**
+     * @param string $script
+     * @return string
+     */
+    public static function reorderRules($script)
+    {
+        $actionsOrder = array(
+            'Discard' => array(),
+            'Mirror to' => array(),
+            'Mark' => array(),
+            'Store in' => array(),
+        );
+
+        preg_match_all('/^(#rule=.*?)\n\n/ms', $script, $matches);
+        foreach ($matches[1] as $sieveRule) {
+            preg_match('/^#actions=(.+?)$/ms', $sieveRule, $actionMatch);
+            $actionObject = json_decode($actionMatch[1], true);
+            reset($actionObject);
+            $action = key($actionObject);
+            $actionsOrder[$action][] = $sieveRule;
+        }
+
+        if (preg_match('/^(require.+?\n\n)/ms', $script, $requireMatch)) {
+            $require = $requireMatch[1];
+        } else {
+            $require = '';
+        };
+
+        foreach ($actionsOrder as $actionType => &$actions) {
+            if (empty($actions)) {
+                unset($actionsOrder[$actionType]);
+            } else {
+                $actions = implode("\n\n", $actions);
+            }
+        }
+
+        return $require . implode("\n\n", $actionsOrder) . "\n\n";
     }
 }

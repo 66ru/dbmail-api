@@ -6,6 +6,6 @@ require "imap4flags";
 #rulesJoinOperator="and"
 #actions={"Mark":"Flagged"}
 if not header :is "From" "from@mail.ru" {
-    keep :flags  "Flagged";
+    addflag "Flagged";
 }
 

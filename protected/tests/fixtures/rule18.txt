@@ -1,14 +1,5 @@
 require "fileinto";
 
-#rule=rule1
-#require={"fileinto":true}
-#rules=[{"From":{"operation":"is","value":"from@mail.ru"}}]
-#rulesJoinOperator="and"
-#actions={"Store in":"INBOX"}
-if header :is "From" "from@mail.ru" {
-    fileinto "INBOX";
-}
-
 #rule=rule8
 #rules=[{"Message Size":{"operation":"greater than","value":"10000"}},{"From":{"operation":"is","value":"*from*"}}]
 #rulesJoinOperator="or"
@@ -18,4 +9,13 @@ if header :is "From" "from@mail.ru" {
 #         header :contains "From" "from") {
 #    redirect "to@mail.ru";
 #}
+
+#rule=rule1
+#require={"fileinto":true}
+#rules=[{"From":{"operation":"is","value":"from@mail.ru"}}]
+#rulesJoinOperator="and"
+#actions={"Store in":"INBOX"}
+if header :is "From" "from@mail.ru" {
+    fileinto "INBOX";
+}
 

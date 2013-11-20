@@ -1,5 +1,14 @@
 require ["fileinto", "imap4flags"];
 
+#rule=rule3
+#require={"imap4flags":true}
+#rules=[{"From":{"operation":"is not","value":"from@mail.ru"}}]
+#rulesJoinOperator="and"
+#actions={"Mark":"Flagged"}
+if not header :is "From" "from@mail.ru" {
+    addflag "Flagged";
+}
+
 #rule=rule2
 #require={"fileinto":true}
 #rules=[{"Subject":{"operation":"is","value":"*\u0442\u0435\u0441\u0442*"}}]
@@ -7,14 +16,5 @@ require ["fileinto", "imap4flags"];
 #actions={"Store in":"Deleted Messages"}
 if header :contains "Subject" "&BEIENQRBBEI-" {
     fileinto "Deleted Messages";
-}
-
-#rule=rule3
-#require={"imap4flags":true}
-#rules=[{"From":{"operation":"is not","value":"from@mail.ru"}}]
-#rulesJoinOperator="and"
-#actions={"Mark":"Flagged"}
-if not header :is "From" "from@mail.ru" {
-    keep :flags  "Flagged";
 }
 

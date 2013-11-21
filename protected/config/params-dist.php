@@ -11,6 +11,8 @@ return array(
 
     'defaultMailDomain' => '66.ru',
 
+    'secKey' => '',
+
     'dbMailHost' => '',
     'dbMailUser' => '',
     'dbMailPassword' => '',

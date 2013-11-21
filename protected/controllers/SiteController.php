@@ -9,7 +9,7 @@ class SiteController extends Controller
     {
         parent::init();
 
-        if (empty($_POST['secKey']) || $_POST['secKey']!= '&k3]E1v39"okbg2') {
+        if (empty($_POST['secKey']) || $_POST['secKey']!= Yii::app()->params['secKey']) {
             throw new CHttpException(403);
         }
 

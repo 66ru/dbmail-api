@@ -11,5 +11,8 @@
     "require-dev": {
         "phpunit/phpunit": "3.7.*",
         "phpunit/phpunit-selenium": "1.*"
+    },
+    "require": {
+        "m8rge/curl-helper": "~1.1"
     }
 }

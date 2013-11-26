@@ -10,14 +10,16 @@ return array(
     'dbmail-sievecmd' => '/usr/sbin/dbmail-sievecmd',
 
     'defaultMailDomain' => '66.ru',
+    'webmailEndPoint' => 'http://mail.66.ru/service.php',
+    'webmailSecKey' => '',
 
     'secKey' => '',
 
-    'dbMailHost' => '',
-    'dbMailUser' => '',
+    'dbMailHost' => 'localhost',
+    'dbMailUser' => 'root',
     'dbMailPassword' => '',
 
-    'getMailHost' => '',
-    'getMailUser' => '',
+    'getMailHost' => 'localhost',
+    'getMailUser' => 'root',
     'getMailPassword' => '',
 );

@@ -12,6 +12,7 @@ return array(
     'defaultMailDomain' => '66.ru',
     'webmailEndPoint' => 'http://mail.66.ru/service.php',
     'webmailSecKey' => '',
+    'webmailClientAddress' => '',
 
     'secKey' => '',
 

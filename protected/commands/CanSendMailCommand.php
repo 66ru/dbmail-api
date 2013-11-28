@@ -28,7 +28,10 @@ class CanSendMailCommand extends CConsoleCommand
                     throw new CException("empty recipient: " . $stringData);
                 }
                 if (empty($data['size'])) {
-                    Yii::log('size is 0: ' . $stringData, CLogger::LEVEL_WARNING);
+                    /** @var ESentryComponent $sentry */
+                    $sentry = Yii::app()->getComponent('RSentryException');
+                    $exception = new CException('size is 0: ' . $stringData);
+                    $sentry->handleException(new CExceptionEvent(null, $exception));
                 }
                 $answer = \m8rge\CurlHelper::postUrl(
                     Yii::app()->params['webmailEndPoint'],

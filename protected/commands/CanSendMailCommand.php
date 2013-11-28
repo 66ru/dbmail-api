@@ -20,17 +20,29 @@ class CanSendMailCommand extends CConsoleCommand
                 throw new CException("unrecognized request type: {$data['request']}");
             }
 
-            if (!empty($data['sender']) && $data['client_address'] !== Yii::app()->params['webmailClientAddress']) {
+            if (!empty($data['sasl_username'])) {
+                if (empty($data['instance'])) {
+                    throw new CException("empty instance: " . $stringData);
+                }
+                if (empty($data['recipient'])) {
+                    throw new CException("empty recipient: " . $stringData);
+                }
+                if (empty($data['size'])) {
+                    Yii::log('size is 0: ' . $stringData, CLogger::LEVEL_WARNING);
+                }
                 $answer = \m8rge\CurlHelper::postUrl(
                     Yii::app()->params['webmailEndPoint'],
                     array(
                         'secKey' => Yii::app()->params['webmailSecKey'],
                         'controller' => 'userOptions',
                         'action' => 'canSendEmail',
-                        'login' => str_replace('@' . Yii::app()->params['defaultMailDomain'], '', $data['sender']),
+                        'login' => $data['sasl_username'],
                         'instance' => $data['instance'],
                         'recipient' => $data['recipient'],
                         'size' => $data['size'],
+                    ),
+                    array(
+                        CURLOPT_TIMEOUT => 10,
                     )
                 );
                 $canSendEmail = @json_decode($answer, true);

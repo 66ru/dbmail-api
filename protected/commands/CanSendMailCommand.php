@@ -43,6 +43,7 @@ class CanSendMailCommand extends CConsoleCommand
                         'instance' => $data['instance'],
                         'recipient' => $data['recipient'],
                         'size' => $data['size'],
+                        'client_address' => $data['client_address'],
                     ),
                     array(
                         CURLOPT_TIMEOUT => 10,

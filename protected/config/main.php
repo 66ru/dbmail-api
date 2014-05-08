@@ -40,7 +40,7 @@ return array(
             ),
         ),
         'db' => array(
-            'class' => 'CDbConnection',
+            'class' => 'XtraDbConnection',
             'connectionString' => "mysql:host={$params['dbMailHost']};dbname=dbmail",
             'emulatePrepare' => true,
             'username' => $params['dbMailUser'],

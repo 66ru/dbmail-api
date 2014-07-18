@@ -13,6 +13,8 @@
         "phpunit/phpunit-selenium": "1.*"
     },
     "require": {
-        "m8rge/curl-helper": "~1.1"
+        "m8rge/curl-helper": "~1.1",
+        "yiisoft/yii": "1.1.15",
+        "m8rge/yii-sentry-log": "dev-master"
     }
 }

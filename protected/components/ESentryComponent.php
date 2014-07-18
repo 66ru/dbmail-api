@@ -1,6 +1,6 @@
 <?php
 
-Yii::import('lib.sentry.*');
+Yii::import('vendor.m8rge.yii-sentry-log.RSentryComponent');
 
 class ESentryComponent extends RSentryComponent
 {

@@ -2,14 +2,13 @@
 
 require_once(__DIR__ . '/../vendor/autoload.php');
 
-// change the following paths if necessary
-$yii = __DIR__ . '/../lib/yii/framework/yii.php';
-$config = __DIR__ . '/../protected/config/main.php';
-
-$params = require(__DIR__ . '/../protected/config/params.php');
-defined('YII_DEBUG') or define('YII_DEBUG', $params['debug']);
-// specify how many levels of call stack should be shown in each log message
+ini_set('display_errors', 1);
+$params = require(dirname(__FILE__) . '/../protected/config/params.php');
+defined('YII_DEBUG') or define('YII_DEBUG', $params['yiiDebug']);
 defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL', 3);
+
+$yii = __DIR__ . '/../vendor/yiisoft/yii/framework/' . (YII_DEBUG ? 'yii.php' : 'yiilite.php');
+$config = dirname(__FILE__) . '/../protected/config/main.php';
 
 require_once($yii);
 Yii::createWebApplication($config)->run();

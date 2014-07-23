@@ -3,7 +3,7 @@
 /**
  * Class GlobalConsoleCommand
  *
- * version 2.0
+ * version 3.0
  *
  * @property CDbConnection dbConnection
  * @property CDbCommandBuilder commandBuilder
@@ -37,28 +37,28 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
      */
     public function getTaskName()
     {
-        return 'taskName';
+        return str_replace('Command', '', get_class($this));
     }
 
     /**
      * @param int[] $busyIds
-     * @throws Exception
+     * @throws GlobalCommandException
      * @return int[] returns task ids available to processing
      */
     public function getAvailableIds($busyIds)
     {
-        throw new Exception(__METHOD__ . ' must be implemented');
+        throw new GlobalCommandException(__METHOD__ . ' must be implemented');
     }
 
     /**
      * begin processing bunch of task ids
      * @param int[] $ids
-     * @throws Exception
+     * @throws GlobalCommandException
      * @return int pid of started process
      */
     protected function startProcess($ids)
     {
-        throw new Exception(__METHOD__ . ' must be implemented');
+        throw new GlobalCommandException(__METHOD__ . ' must be implemented');
     }
 
     /**
@@ -76,73 +76,107 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
         $this->lockAndStartTasks();
     }
 
+    /**
+     * @throws GlobalCommandException
+     */
     public function refreshAndCleanupTasks()
     {
+        /** @var ESentryComponent $sentry */
+        $sentry = Yii::app()->getComponent('RSentryException');
+
+        try {
+            $criteria = new CDbCriteria();
+            $criteria->addColumnCondition(array('hostname' => gethostname()));
+            CronLock::model()->updateAll(
+                array(
+                    'lastActivity' => new CDbExpression('NOW()'),
+                ),
+                $criteria
+            );
+        } catch (CDbException $e) {
+            throw new GlobalCommandException('failed update lastActivity', 0, $e);
+        }
+
         /** @var CronLock[] $myTasks */
         $myTasks = CronLock::model()->findAllByAttributes(array('hostname' => gethostname()));
         foreach ($myTasks as $task) {
-            if (empty($task->pid) && empty($task->lastActivity)) {
-                $this->logTask($task, 'failed to start', CLogger::LEVEL_ERROR);
-            } else {
+            if (!empty($task->pid)) {
                 $processStartedTime = @filectime('/proc/' . $task->pid);
-                if (!$processStartedTime) {
+                if (!$processStartedTime) { // process missing –> postprocess
                     $this->postProcessing($task->taskId); //todo: if this failed -> we do not delete task (
                     try {
-                        $task->delete();
+                        if (!$task->delete()) {
+                            $sentry->setContext($task->errors);
+                            throw new GlobalCommandException('failed to remove lock');
+                        }
                     } catch (CDbException $e) {
-                        $this->logTask($task, 'failed to remove lock', CLogger::LEVEL_ERROR);
-                        throw $e;
+                        $sentry->setContext($task->attributes);
+                        throw new GlobalCommandException('failed to remove lock', 0, $e);
                     }
                     continue;
                 } elseif ($processStartedTime + $this->longRunningTimeout < time()) {
-                    $this->logTask($task, 'freezed', CLogger::LEVEL_WARNING);
+                    $e = new GlobalCommandException('task freezed');
+                    $e->severety = E_WARNING;
+                    $sentry->captureException($e, $task->attributes);
                 }
-            }
-
-            try {
-                $task->lastActivity = new CDbExpression('NOW()');
-                $task->save();
-            } catch (CDbException $e) {
-                $this->logTask($task, 'failed to update lastActivity', CLogger::LEVEL_ERROR);
-                throw $e;
             }
         }
     }
 
+    /**
+     * @throws GlobalCommandException
+     */
     public function releaseExpiredTasks()
     {
-        /** @var CronLock[] $expiredTasks */
-        $expiredTasks = CronLock::model()->findAll(
-            'lastActivity <= NOW() - INTERVAL :changeOwnerTimeout SECOND',
-            array(
-                ':changeOwnerTimeout' => $this->changeOwnerTimeout,
-            )
-        );
+        /** @var ESentryComponent $sentry */
+        $sentry = Yii::app()->getComponent('RSentryException');
+
+        try {
+            /** @var CronLock[] $expiredTasks */
+            $expiredTasks = CronLock::model()->findAll(
+                'lastActivity <= NOW() - INTERVAL :changeOwnerTimeout SECOND',
+                array(
+                    ':changeOwnerTimeout' => $this->changeOwnerTimeout,
+                )
+            );
+        } catch (CDbException $e) {
+            throw new GlobalCommandException('failed fetch expired tasks', 0, $e);
+        }
 
         foreach ($expiredTasks as $task) {
             try {
-                $task->delete();
-                $this->logTask(
-                    $task,
-                    "(last activity at {$task->lastActivity}) lock was released by " . gethostname(),
-                    CLogger::LEVEL_WARNING
-                );
+                if (!$task->delete()) {
+                    $sentry->setContext($task->attributes);
+                    throw new GlobalCommandException('failed to release lock');
+                }
+
+                $e = new GlobalCommandException('task lock was released');
+                $e->severety = E_WARNING;
+                $additionalData = $task->attributes;
+                $additionalData['releasedBy'] = gethostname();
+                $sentry->captureException($e, $additionalData);
             } catch (CDbException $e) {
-                $this->logTask($task, 'failed to release lock', CLogger::LEVEL_ERROR);
-                throw $e;
+                throw new GlobalCommandException('failed to release lock', 0, $e);
             }
         }
     }
 
+    /**
+     * @throws GlobalCommandException
+     */
     protected function lockAndStartTasks()
     {
         $queuedTaskIds = array();
         $busyIds = array();
 
-        /** @var CronLock[] $lockedTasks */
-        $lockedTasks = CronLock::model()->findAllByAttributes(array('taskName' => $this->taskName));
-        foreach ($lockedTasks as $lockedTask) {
-            $busyIds[] = $lockedTask->taskId;
+        try {
+            /** @var CronLock[] $lockedTasks */
+            $lockedTasks = CronLock::model()->findAllByAttributes(array('taskName' => $this->taskName));
+            foreach ($lockedTasks as $lockedTask) {
+                $busyIds[] = $lockedTask->taskId;
+            }
+        } catch (CDbException $e) {
+            throw new GlobalCommandException('failed fetch locked tasks', 0, $e);
         }
 
         foreach ($this->getAvailableIds($busyIds) as $taskId) {
@@ -173,36 +207,42 @@ abstract class GlobalConsoleCommand extends CConsoleCommand
 
     /**
      * @param int[] $taskIds
-     * @throws CDbException
+     * @throws GlobalCommandException
      */
     protected function startTasks($taskIds)
     {
+        /** @var ESentryComponent $sentry */
+        $sentry = Yii::app()->getComponent('RSentryException');
+
         $pid = $this->startProcess($taskIds);
 
         try {
             $criteria = new CDbCriteria();
             $criteria->addColumnCondition(array('taskName' => $this->taskName));
             $criteria->addInCondition('taskId', $taskIds);
-            CronLock::model()->updateAll(
+            $updated = CronLock::model()->updateAll(
                 array(
                     'pid' => $pid,
                     'lastActivity' => new CDbExpression('NOW()'),
                 ),
                 $criteria
             );
+            if (!$updated) {
+                $sentry->setContext(array('taskName' => $this->taskName, 'taskIds' => $taskIds));
+                throw new GlobalCommandException("can't find rows for update pid and lastActivity");
+            }
         } catch (CDbException $e) {
-            Yii::log("failed update pid on {$this->taskName}-(" . implode(', ', $taskIds) . ")", CLogger::LEVEL_ERROR);
-            throw $e;
+            throw new GlobalCommandException("failed update pid", 0, $e);
         }
     }
+}
 
-    /**
-     * @param CronLock $task
-     * @param string $message
-     * @param $level
-     */
-    public function logTask($task, $message, $level)
+class GlobalCommandException extends Exception
+{
+    public $severety = E_ERROR;
+
+    public function getSeverity()
     {
-        Yii::log("task {$task->taskName}-{$task->taskId}@{$task->hostname} " . $message, $level, 'cron');
+        return $this->severety;
     }
 }

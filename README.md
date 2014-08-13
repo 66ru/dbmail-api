@@ -8,6 +8,17 @@
     ```
 * Внутренняя структура api в некоторой части продиктована текущим строением [webmail](https://github.com/mediasite/webmail).
 
+## POST `/isUserPresent`
+Проверяет наличие пользователя.
+### Принимает:
+* `userName`, string - Имя пользователя в dbmail.
+
+### Возвращает в случае успешной работы:
+```js
+{"status": "ok", "found": true}
+```
+Где `found` - Присутствует пользователь или нет, bool.
+
 ## POST `/createUser`
 Создает пользователя. Если имя пользователя содержит символ `@`, тогда оно используется для имени email. Иначе - присваивает ему ящик вида `userName@defaultMailDomain`. `defaultMailDomain` указывается в [настройках dbmail-api](https://github.com/mediasite/dbmail-api/blob/master/protected/config/params-dist.php).
 ### Принимает:
